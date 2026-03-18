@@ -17,49 +17,27 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: #0e1018; }
   ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
-  @keyframes float {
-    0%   { transform: translateY(0) rotate(0deg); }
-    100% { transform: translateY(-16px) rotate(7deg); }
-  }
-  @keyframes pulse-red {
-    0%,100% { box-shadow: 0 0 0 0 rgba(200,16,46,0.5); }
-    50%      { box-shadow: 0 0 0 14px rgba(200,16,46,0); }
-  }
-  @keyframes pulse-dot {
-    0%,100% { opacity: 1; }
-    50%      { opacity: 0.3; }
-  }
-  @keyframes slideIn {
-    from { transform: translateX(70px); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes float { 0% { transform:translateY(0) rotate(0deg); } 100% { transform:translateY(-16px) rotate(7deg); } }
+  @keyframes pulse-red { 0%,100% { box-shadow:0 0 0 0 rgba(200,16,46,0.5); } 50% { box-shadow:0 0 0 14px rgba(200,16,46,0); } }
+  @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  @keyframes slideIn { from { transform:translateX(70px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
   .cta-btn  { animation: pulse-red 2.2s infinite; }
   .notif    { animation: slideIn 0.28s ease; }
   .spin     { animation: spin 0.9s linear infinite; display:inline-block; }
   .fade-in  { animation: fadeIn 0.3s ease; }
   .live-dot { width:7px;height:7px;border-radius:50%;background:#c8102e;display:inline-block;margin-right:5px;animation:pulse-dot 1.3s infinite; }
-  .pride-box {
-    background: linear-gradient(135deg,#0e1828 0%,#1a0a10 100%);
-    border: 1px solid #c8102e44;
-    border-left: 4px solid #c8102e;
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin-bottom: 26px;
-    font-size: 13px;
-    color: #9aa0b0;
-    line-height: 1.75;
-  }
-  .pride-box strong { color: #e2e4ec; }
+  .pride-box { background:linear-gradient(135deg,#0e1828 0%,#1a0a10 100%); border:1px solid #c8102e44; border-left:4px solid #c8102e; border-radius:8px; padding:14px 18px; margin-bottom:26px; font-size:13px; color:#9aa0b0; line-height:1.75; }
+  .pride-box strong { color:#e2e4ec; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect } = React;
 
-/* ── SUPABASE CLIENT ── */
+/* ── SUPABASE ── */
 const SUPA_URL = "https://mmjgjifdnbjugzxxkauk.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tamdqaWZkbmJqdWd6eHhrYXVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY1NTEsImV4cCI6MjA4ODczMjU1MX0.nIBgAhRvg3uXdFvjs0nECY1kAvrC18L_qmwnArNHDEE";
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -78,58 +56,66 @@ const ROUND_PTS = [1,1,2,3,5,8];
 const REGIONS   = ["South","East","West","Midwest"];
 function upsetBonus(seed){ return seed>8 ? Math.floor(seed/2) : 0; }
 
-/* ── 2025 BRACKET DATA ── */
+/* ── 2026 BRACKET ──
+   First Four games (Mar 17-18) determine:
+   - South #16: Prairie View A&M vs Lehigh  → winner plays Florida
+   - West #11:  Texas vs NC State           → winner plays BYU
+   - Midwest #11: SMU vs Miami (OH)         → winner plays Tennessee
+   - Midwest #16: UMBC vs Howard            → winner plays Michigan
+   Update the TBD entries below once First Four results are in (Mar 18).
+── */
 const BRACKET = {
-  South:[
-    {seed:1,name:"Auburn"},{seed:16,name:"Alabama State"},
-    {seed:8,name:"Louisville"},{seed:9,name:"Creighton"},
-    {seed:5,name:"Michigan"},{seed:12,name:"UC San Diego"},
-    {seed:4,name:"Texas A&M"},{seed:13,name:"Yale"},
-    {seed:6,name:"North Carolina"},{seed:11,name:"Ole Miss"},
-    {seed:3,name:"Iowa State"},{seed:14,name:"Lipscomb"},
-    {seed:7,name:"Marquette"},{seed:10,name:"New Mexico"},
-    {seed:2,name:"Michigan State"},{seed:15,name:"Bryant"},
+  South: [
+    {seed:1, name:"Florida"},       {seed:16,name:"Prairie View/Lehigh"},
+    {seed:8, name:"Clemson"},        {seed:9, name:"Iowa"},
+    {seed:5, name:"Vanderbilt"},     {seed:12,name:"McNeese"},
+    {seed:4, name:"Nebraska"},       {seed:13,name:"Troy"},
+    {seed:6, name:"North Carolina"}, {seed:11,name:"VCU"},
+    {seed:3, name:"Illinois"},       {seed:14,name:"Penn"},
+    {seed:7, name:"Saint Mary's"},   {seed:10,name:"Texas A&M"},
+    {seed:2, name:"Houston"},        {seed:15,name:"Idaho"},
   ],
-  East:[
-    {seed:1,name:"Duke"},{seed:16,name:"Mount St. Mary's"},
-    {seed:8,name:"Baylor"},{seed:9,name:"Mississippi State"},
-    {seed:5,name:"Oregon"},{seed:12,name:"Liberty"},
-    {seed:4,name:"Arizona"},{seed:13,name:"Akron"},
-    {seed:6,name:"BYU"},{seed:11,name:"VCU"},
-    {seed:3,name:"Wisconsin"},{seed:14,name:"Montana"},
-    {seed:7,name:"Saint Mary's"},{seed:10,name:"Vanderbilt"},
-    {seed:2,name:"Alabama"},{seed:15,name:"Robert Morris"},
+  East: [
+    {seed:1, name:"Duke"},           {seed:16,name:"Siena"},
+    {seed:8, name:"Ohio State"},     {seed:9, name:"TCU"},
+    {seed:5, name:"St. John's"},     {seed:12,name:"Northern Iowa"},
+    {seed:4, name:"Kansas"},         {seed:13,name:"Cal Baptist"},
+    {seed:6, name:"Louisville"},     {seed:11,name:"South Florida"},
+    {seed:3, name:"Michigan State"}, {seed:14,name:"North Dakota State"},
+    {seed:7, name:"UCLA"},           {seed:10,name:"UCF"},
+    {seed:2, name:"UConn"},          {seed:15,name:"Furman"},
   ],
-  West:[
-    {seed:1,name:"Florida"},{seed:16,name:"Norfolk State"},
-    {seed:8,name:"UConn"},{seed:9,name:"Oklahoma"},
-    {seed:5,name:"Memphis"},{seed:12,name:"Colorado State"},
-    {seed:4,name:"Maryland"},{seed:13,name:"Grand Canyon"},
-    {seed:6,name:"Missouri"},{seed:11,name:"Drake"},
-    {seed:3,name:"Texas Tech"},{seed:14,name:"UNC Wilmington"},
-    {seed:7,name:"Kansas"},{seed:10,name:"Arkansas"},
-    {seed:2,name:"St. John's"},{seed:15,name:"Omaha"},
+  West: [
+    {seed:1, name:"Arizona"},        {seed:16,name:"LIU"},
+    {seed:8, name:"Villanova"},      {seed:9, name:"Utah State"},
+    {seed:5, name:"Wisconsin"},      {seed:12,name:"High Point"},
+    {seed:4, name:"Arkansas"},       {seed:13,name:"Hawaii"},
+    {seed:6, name:"BYU"},            {seed:11,name:"Texas/NC State"},
+    {seed:3, name:"Gonzaga"},        {seed:14,name:"Kennesaw State"},
+    {seed:7, name:"Miami (FL)"},     {seed:10,name:"Missouri"},
+    {seed:2, name:"Purdue"},         {seed:15,name:"Queens"},
   ],
-  Midwest:[
-    {seed:1,name:"Houston"},{seed:16,name:"SIUE"},
-    {seed:8,name:"Georgia"},{seed:9,name:"Gonzaga"},
-    {seed:5,name:"Clemson"},{seed:12,name:"McNeese"},
-    {seed:4,name:"Purdue"},{seed:13,name:"High Point"},
-    {seed:6,name:"Xavier"},{seed:11,name:"Illinois"},
-    {seed:3,name:"Kentucky"},{seed:14,name:"Troy"},
-    {seed:7,name:"UCLA"},{seed:10,name:"Utah State"},
-    {seed:2,name:"Tennessee"},{seed:15,name:"Wofford"},
+  Midwest: [
+    {seed:1, name:"Michigan"},       {seed:16,name:"UMBC/Howard"},
+    {seed:8, name:"Georgia"},        {seed:9, name:"Saint Louis"},
+    {seed:5, name:"Texas Tech"},     {seed:12,name:"Akron"},
+    {seed:4, name:"Alabama"},        {seed:13,name:"Hofstra"},
+    {seed:6, name:"Tennessee"},      {seed:11,name:"SMU/Miami (OH)"},
+    {seed:3, name:"Virginia"},       {seed:14,name:"Wright State"},
+    {seed:7, name:"Kentucky"},       {seed:10,name:"Santa Clara"},
+    {seed:2, name:"Iowa State"},     {seed:15,name:"Tennessee State"},
   ],
 };
 
+/* ── ACTUAL RESULTS (blank — fill in as games are played) ── */
 const ACTUAL = {
-  South:  {r64:["Auburn","Creighton","Michigan","Texas A&M","Ole Miss","Iowa State","New Mexico","Michigan State"],r32:["Auburn","Michigan","Ole Miss","Michigan State"],s16:["Auburn","Michigan State"],e8:["Auburn"]},
-  East:   {r64:["Duke","Baylor","Oregon","Arizona","BYU","Wisconsin","Saint Mary's","Alabama"],r32:["Duke","Arizona","BYU","Alabama"],s16:["Duke","Alabama"],e8:["Duke"]},
-  West:   {r64:["Florida","UConn","Colorado State","Maryland","Drake","Texas Tech","Arkansas","St. John's"],r32:["Florida","Maryland","Texas Tech","Arkansas"],s16:["Florida","Texas Tech"],e8:["Florida"]},
-  Midwest:{r64:["Houston","Gonzaga","McNeese","Purdue","Illinois","Kentucky","UCLA","Tennessee"],r32:["Houston","Purdue","Kentucky","Tennessee"],s16:["Houston","Tennessee"],e8:["Houston"]},
-  finalFour:["Auburn","Duke","Florida","Houston"],
-  semis:["Florida","Houston"],
-  champion:"Florida",
+  South:   {r64:[],r32:[],s16:[],e8:[]},
+  East:    {r64:[],r32:[],s16:[],e8:[]},
+  West:    {r64:[],r32:[],s16:[],e8:[]},
+  Midwest: {r64:[],r32:[],s16:[],e8:[]},
+  finalFour: [],
+  semis: [],
+  champion: null,
 };
 
 const SEEDS={};
@@ -164,49 +150,23 @@ async function fetchESPN(){
     if(!r.ok)throw new Error();
     const d=await r.json();
     return (d.events||[]).map(ev=>({
-      name:ev.name,
-      status:ev.status?.type?.name,
-      completed:ev.status?.type?.completed,
+      name:ev.name, status:ev.status?.type?.name,
       winner:ev.competitions?.[0]?.competitors?.find(c=>c.winner)?.team?.displayName||null,
     }));
   }catch{ return null; }
 }
 
 /* ── SUPABASE HELPERS ── */
-async function dbGetEntries(){
-  const {data,error}=await sb.from("entries").select("*").order("score",{ascending:false});
-  if(error){console.error(error);return[];}
-  return data||[];
-}
-
-async function dbUpsertEntry(entry){
-  const {data,error}=await sb.from("entries").upsert(entry,{onConflict:"email"}).select().single();
-  if(error){console.error(error);return null;}
-  return data;
-}
-
-async function dbGetEntryByEmail(email){
-  const {data,error}=await sb.from("entries").select("*").eq("email",email.toLowerCase()).single();
-  if(error)return null;
-  return data;
-}
+async function dbGetEntries(){ const {data}=await sb.from("entries").select("*").order("score",{ascending:false}); return data||[]; }
+async function dbUpsertEntry(e){ const {data}=await sb.from("entries").upsert(e,{onConflict:"email"}).select().single(); return data; }
+async function dbGetByEmail(email){ const {data}=await sb.from("entries").select("*").eq("email",email.toLowerCase()).single(); return data||null; }
 
 /* ── PRIDE BANNER ── */
 function PrideBanner(){
   return(
     <div className="pride-box">
       <strong>🏅 Official ZikaMadness Rules — Please Read</strong><br/>
-      This is a <strong>pride-only</strong> competition. <strong>There is absolutely no prize.</strong> No cash, no gift cards, no trophies, no gift baskets — nothing tangible changes hands. The sole reward for winning ZikaMadness is eternal bragging rights within the Zika family and the right to talk insufferably about your bracket for exactly one calendar year. Participate accordingly.
-    </div>
-  );
-}
-
-/* ── LOADING SCREEN ── */
-function LoadingScreen({msg}){
-  return(
-    <div style={{minHeight:"60vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
-      <span className="spin" style={{fontSize:32,color:C.red}}>⟳</span>
-      <p style={{color:C.muted,fontSize:14}}>{msg||"Loading…"}</p>
+      This is a <strong>pride-only</strong> competition. <strong>There is absolutely no prize.</strong> No cash, no gift cards, no trophies — nothing tangible changes hands. The sole reward for winning ZikaMadness is eternal bragging rights within the Zika family and the right to talk insufferably about your bracket for exactly one calendar year. Participate accordingly.
     </div>
   );
 }
@@ -215,97 +175,49 @@ function LoadingScreen({msg}){
 function App(){
   const [view,setView]=useState("landing");
   const [entries,setEntries]=useState([]);
-  const [me,setMe]=useState(null);         // current user's DB row
+  const [me,setMe]=useState(null);
   const [notif,setNotif]=useState(null);
   const [espnOk,setEspnOk]=useState(null);
   const [liveCount,setLiveCount]=useState(0);
   const [appLoading,setAppLoading]=useState(true);
 
-  // Load entries on mount
   useEffect(()=>{
     async function init(){
-      // Check if user was previously signed in (stored in sessionStorage)
       const savedEmail=sessionStorage.getItem("zm_email");
-      const [allEntries]=await Promise.all([dbGetEntries()]);
-      setEntries(allEntries);
-      if(savedEmail){
-        const row=allEntries.find(e=>e.email===savedEmail.toLowerCase());
-        if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");}
-      }
+      const all=await dbGetEntries();
+      setEntries(all);
+      if(savedEmail){ const row=all.find(e=>e.email===savedEmail); if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");} }
       setAppLoading(false);
     }
     init();
   },[]);
 
-  // ESPN polling
   useEffect(()=>{
-    async function poll(){
-      const games=await fetchESPN();
-      if(games===null){setEspnOk(false);return;}
-      setEspnOk(true);
-      setLiveCount(games.filter(g=>g.status==="STATUS_IN_PROGRESS").length);
-    }
-    poll();
-    const iv=setInterval(poll,60000);
-    return()=>clearInterval(iv);
+    async function poll(){ const g=await fetchESPN(); if(!g){setEspnOk(false);return;} setEspnOk(true); setLiveCount(g.filter(x=>x.status==="STATUS_IN_PROGRESS").length); }
+    poll(); const iv=setInterval(poll,60000); return()=>clearInterval(iv);
   },[]);
 
-  function notify(msg,type="ok"){
-    setNotif({msg,type});
-    setTimeout(()=>setNotif(null),3400);
-  }
+  function notify(msg,type="ok"){ setNotif({msg,type}); setTimeout(()=>setNotif(null),3400); }
 
-  async function refreshEntries(){
-    const all=await dbGetEntries();
-    setEntries(all);
-    if(me){
-      const updated=all.find(e=>e.id===me.id);
-      if(updated)setMe(updated);
-    }
-  }
+  async function refreshEntries(){ const all=await dbGetEntries(); setEntries(all); if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);} }
 
   async function handleRegister(email,bracketName){
-    const existing=await dbGetEntryByEmail(email);
-    if(existing){
-      setMe(existing);
-      sessionStorage.setItem("zm_email",email.toLowerCase());
-      await refreshEntries();
-      setView(existing.picks?"leaderboard":"bracket");
-      notify(`Welcome back, ${existing.bracket_name}!`);
-      return;
-    }
-    const newEntry={
-      email:email.toLowerCase(),
-      bracket_name:bracketName,
-      picks:null,
-      score:0,
-    };
-    const saved=await dbUpsertEntry(newEntry);
-    if(!saved){notify("Error saving entry — please try again.","err");return;}
-    setMe(saved);
-    sessionStorage.setItem("zm_email",email.toLowerCase());
-    await refreshEntries();
-    setView("bracket");
+    const existing=await dbGetByEmail(email);
+    if(existing){ setMe(existing); sessionStorage.setItem("zm_email",existing.email); await refreshEntries(); setView(existing.picks?"leaderboard":"bracket"); notify(`Welcome back, ${existing.bracket_name}!`); return; }
+    const saved=await dbUpsertEntry({email:email.toLowerCase(),bracket_name:bracketName,picks:null,score:0});
+    if(!saved){notify("Error — please try again.","err");return;}
+    setMe(saved); sessionStorage.setItem("zm_email",saved.email); await refreshEntries(); setView("bracket");
     notify(`Welcome, ${bracketName}! Fill out your bracket.`);
   }
 
   async function handleSavePicks(picks){
     const score=calcScore(picks,ACTUAL);
-    const updated={...me, picks:picks, score:score};
-    const saved=await dbUpsertEntry(updated);
-    if(!saved){notify("Error saving bracket — please try again.","err");return;}
-    setMe(saved);
-    sessionStorage.setItem("zm_email",saved.email);
-    await refreshEntries();
-    notify("Bracket saved! 🏀");
-    setView("leaderboard");
+    const saved=await dbUpsertEntry({...me,picks,score});
+    if(!saved){notify("Error saving — please try again.","err");return;}
+    setMe(saved); await refreshEntries(); notify("Bracket saved! 🏀"); setView("leaderboard");
   }
 
-  function handleLogout(){
-    setMe(null);
-    sessionStorage.removeItem("zm_email");
-    setView("landing");
-  }
+  function handleLogout(){ setMe(null); sessionStorage.removeItem("zm_email"); setView("landing"); }
 
   if(appLoading) return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -318,11 +230,7 @@ function App(){
 
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.text}}>
-      {notif&&(
-        <div className="notif" style={{position:"fixed",top:64,right:14,zIndex:400,background:notif.type==="err"?C.redDim:C.greenDim,border:`1px solid ${notif.type==="err"?C.red:C.green}`,color:"#fff",padding:"11px 18px",borderRadius:8,fontWeight:700,fontSize:13,boxShadow:"0 6px 28px rgba(0,0,0,0.7)",maxWidth:300}}>
-          {notif.msg}
-        </div>
-      )}
+      {notif&&<div className="notif" style={{position:"fixed",top:64,right:14,zIndex:400,background:notif.type==="err"?C.redDim:C.greenDim,border:`1px solid ${notif.type==="err"?C.red:C.green}`,color:"#fff",padding:"11px 18px",borderRadius:8,fontWeight:700,fontSize:13,boxShadow:"0 6px 28px rgba(0,0,0,0.7)",maxWidth:300}}>{notif.msg}</div>}
       <Header me={me} view={view} setView={setView} logout={handleLogout} espnOk={espnOk} liveCount={liveCount}/>
       <main style={{maxWidth:1100,margin:"0 auto",padding:"22px 14px 90px"}}>
         {view==="landing"    &&<Landing onStart={()=>setView("register")}/>}
@@ -331,13 +239,11 @@ function App(){
         {view==="leaderboard"&&<Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries}/>}
         {view==="scoring"    &&<ScoringGuide/>}
         {!me&&!["landing","register","scoring"].includes(view)&&(
-          <div style={{textAlign:"center",padding:"80px 20px"}}>
-            <p style={{color:C.muted,fontSize:16}}>Please <button onClick={()=>setView("register")} style={{background:"none",border:"none",color:C.red,fontSize:16,textDecoration:"underline",cursor:"pointer"}}>sign in</button> to continue.</p>
-          </div>
+          <div style={{textAlign:"center",padding:"80px 20px"}}><p style={{color:C.muted,fontSize:16}}>Please <button onClick={()=>setView("register")} style={{background:"none",border:"none",color:C.red,fontSize:16,textDecoration:"underline",cursor:"pointer"}}>sign in</button> to continue.</p></div>
         )}
       </main>
       <footer style={{position:"fixed",bottom:0,left:0,right:0,background:C.surface,borderTop:`1px solid ${C.border}`,padding:"9px 14px",textAlign:"center",fontSize:11,color:C.dim}}>
-        🏀 ZikaMadness 2026 · Family Bracket Pool · Test mode with 2025 data · Live scores via ESPN
+        🏀 ZikaMadness 2026 · Family Bracket Pool · First Round begins March 19 · Live scores via ESPN
       </footer>
     </div>
   );
@@ -364,10 +270,8 @@ function Header({me,view,setView,logout,espnOk,liveCount}){
           {me&&<button style={nb("leaderboard")} onClick={()=>setView("leaderboard")}>Leaderboard</button>}
           {me&&<button style={nb("bracket")} onClick={()=>setView("bracket")}>My Bracket</button>}
           <button style={nb("scoring")} onClick={()=>setView("scoring")}>Scoring</button>
-          {me
-            ?<button onClick={logout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.dim,padding:"6px 13px",borderRadius:4,fontSize:13}}>Sign Out</button>
-            :<button onClick={()=>setView("register")} style={{background:C.red,border:"none",color:"#fff",padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:700}}>Sign In</button>
-          }
+          {me?<button onClick={logout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.dim,padding:"6px 13px",borderRadius:4,fontSize:13}}>Sign Out</button>
+             :<button onClick={()=>setView("register")} style={{background:C.red,border:"none",color:"#fff",padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:700}}>Sign In</button>}
         </nav>
       </div>
       {me&&<div style={{maxWidth:1100,margin:"0 auto",padding:"1px 14px 7px",fontSize:11,color:C.dim}}>Signed in as <strong style={{color:C.muted}}>{me.bracket_name}</strong> · {me.email}</div>}
@@ -382,16 +286,17 @@ function Landing({onStart}){
       <div style={{position:"absolute",top:"-15%",left:"50%",transform:"translateX(-50%)",width:700,height:700,borderRadius:"50%",background:`radial-gradient(circle,${C.red}09 0%,transparent 68%)`,pointerEvents:"none"}}/>
       <div className="fade-in" style={{textAlign:"center",position:"relative",zIndex:2,maxWidth:640,padding:"0 16px"}}>
         <div style={{display:"inline-block",background:C.redFaint,border:`1px solid ${C.red}44`,color:C.red,padding:"5px 16px",borderRadius:20,fontSize:11,marginBottom:22,letterSpacing:1.5,fontWeight:700}}>
-          2025 TEST MODE · 2026 BRACKET DROPS MARCH 15
+          2026 TOURNAMENT · FIRST ROUND MARCH 19–20
         </div>
         <h1 style={{fontSize:"clamp(50px,12vw,106px)",fontWeight:900,lineHeight:0.88,margin:"0 0 20px",fontStyle:"italic",letterSpacing:-1}}>
           <span style={{color:C.red,textShadow:`0 0 50px ${C.red}55`}}>Z</span>ika<br/>
           <span style={{color:C.red,textShadow:`0 0 50px ${C.red}55`}}>Madness</span>
         </h1>
-        <p style={{fontSize:16,color:C.muted,lineHeight:1.7,marginBottom:28}}>
-          The Zika family bracket pool.<br/>Pick winners, chase Cinderellas, claim bragging rights.
-        </p>
-        <div style={{display:"flex",gap:7,justifyContent:"center",marginBottom:16,flexWrap:"wrap"}}>
+        <p style={{fontSize:16,color:C.muted,lineHeight:1.7,marginBottom:14}}>The Zika family bracket pool.<br/>Pick winners. Chase Cinderellas. Claim bragging rights.</p>
+        <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:8,padding:"11px 17px",marginBottom:14,fontSize:12,color:C.muted,textAlign:"left",lineHeight:1.8}}>
+          <strong style={{color:"#fff"}}>1-Seeds:</strong> 🏆 Florida (South) · Duke (East) · Arizona (West) · Michigan (Midwest)
+        </div>
+        <div style={{display:"flex",gap:7,justifyContent:"center",marginBottom:14,flexWrap:"wrap"}}>
           {[["R64","1pt"],["R32","1pt"],["S16","2pt"],["E8","3pt"],["F4","5pt"],["🏆","8pt"]].map(([r,p])=>(
             <div key={r} style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:8,padding:"7px 12px",minWidth:54,textAlign:"center"}}>
               <div style={{fontSize:10,color:C.dim,marginBottom:3}}>{r}</div>
@@ -399,11 +304,8 @@ function Landing({onStart}){
             </div>
           ))}
         </div>
-        <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:8,padding:"11px 17px",marginBottom:14,fontSize:13,color:C.muted}}>
-          🎯 <strong style={{color:"#fff"}}>Upset Bonus:</strong> Pick a higher seed to win in R64 and earn bonus points = seed ÷ 2
-        </div>
         <div style={{background:C.redFaint,border:`1px solid ${C.red}33`,borderRadius:8,padding:"11px 17px",marginBottom:30,fontSize:12,color:C.muted,textAlign:"left",lineHeight:1.7}}>
-          🏅 <strong style={{color:"#fff"}}>No prize. Only pride.</strong> Winning earns you exactly one year of Zika family bragging rights and nothing else.
+          🏅 <strong style={{color:"#fff"}}>No prize. Only pride.</strong> Winning earns you one year of Zika family bragging rights and nothing else.
         </div>
         <button className="cta-btn" onClick={onStart} style={{background:C.red,color:"#fff",border:"none",padding:"15px 42px",fontSize:17,fontWeight:900,borderRadius:4,letterSpacing:0.5}}>
           Enter Your Bracket →
@@ -418,29 +320,17 @@ function Landing({onStart}){
 
 /* ── REGISTER ── */
 function Register({entries,onRegister}){
-  const [email,setEmail]=useState("");
-  const [name,setName]=useState("");
-  const [mode,setMode]=useState("new");
-  const [saving,setSaving]=useState(false);
+  const [email,setEmail]=useState(""); const [name,setName]=useState(""); const [mode,setMode]=useState("new"); const [saving,setSaving]=useState(false);
   const found=entries.find(e=>e.email===email.toLowerCase());
-
-  async function submit(){
-    if(!email.trim())return;
-    if(mode==="new"&&!name.trim())return;
-    setSaving(true);
-    await onRegister(email.trim(), mode==="returning"&&found ? found.bracket_name : name.trim());
-    setSaving(false);
-  }
-
+  async function submit(){ if(!email.trim())return; if(mode==="new"&&!name.trim())return; setSaving(true); await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim()); setSaving(false); }
   const tabSt=m=>({flex:1,padding:"10px 0",border:"none",background:mode===m?C.red:"transparent",color:mode===m?"#fff":C.muted,fontWeight:mode===m?700:400,fontSize:14});
   const inp={width:"100%",background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"11px 13px",color:C.text,fontSize:15,marginBottom:16};
-
   return(
     <div style={{maxWidth:460,margin:"0 auto",padding:"32px 0"}}>
       <PrideBanner/>
       <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28}}>
         <h2 style={{fontSize:26,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>Join the Pool</h2>
-        <p style={{color:C.muted,fontSize:13,marginBottom:22}}>One bracket entry per email address. No exceptions.</p>
+        <p style={{color:C.muted,fontSize:13,marginBottom:22}}>One bracket entry per email. No exceptions.</p>
         <div style={{display:"flex",border:`1px solid ${C.border}`,borderRadius:6,overflow:"hidden",marginBottom:22}}>
           <button style={tabSt("new")} onClick={()=>setMode("new")}>New Entry</button>
           <button style={tabSt("returning")} onClick={()=>setMode("returning")}>Returning Player</button>
@@ -454,8 +344,7 @@ function Register({entries,onRegister}){
         {mode==="returning"&&found&&<div style={{background:C.greenDim,border:`1px solid ${C.green}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.green,marginBottom:16}}>✓ Found: <strong>{found.bracket_name}</strong></div>}
         {mode==="returning"&&email.length>4&&!found&&<div style={{background:C.redFaint,border:`1px solid ${C.red}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.red,marginBottom:16}}>No entry found — try "New Entry".</div>}
         <button onClick={submit} disabled={saving} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          {saving&&<span className="spin">⟳</span>}
-          {saving?"Saving…":mode==="new"?"Create My Bracket →":"Sign Back In →"}
+          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":mode==="new"?"Create My Bracket →":"Sign Back In →"}
         </button>
       </div>
     </div>
@@ -464,9 +353,9 @@ function Register({entries,onRegister}){
 
 /* ── TEAM BUTTON ── */
 function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick}){
-  const bg  =isCorrect?C.greenDim:isWrong?`${C.red}18`:isPicked?C.navy:C.bg;
-  const brd =isCorrect?C.green:isWrong?C.red:isPicked?C.navyBright:C.border;
-  const col =isCorrect?C.green:isWrong?C.red:isPicked?"#c8e0ff":C.muted;
+  const bg=isCorrect?C.greenDim:isWrong?`${C.red}18`:isPicked?C.navy:C.bg;
+  const brd=isCorrect?C.green:isWrong?C.red:isPicked?C.navyBright:C.border;
+  const col=isCorrect?C.green:isWrong?C.red:isPicked?"#c8e0ff":C.muted;
   return(
     <button onClick={onClick} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 9px",background:bg,border:`1px solid ${brd}`,borderRadius:4,color:col,fontSize:12,textAlign:"left",width:"100%",transition:"all 0.1s"}}>
       <span style={{background:C.navy,color:C.navyBright,border:`1px solid ${C.navyHi}`,borderRadius:3,padding:"1px 5px",fontSize:10,fontWeight:700,minWidth:20,textAlign:"center"}}>{seed}</span>
@@ -481,34 +370,18 @@ function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick}){
 /* ── BRACKET VIEW ── */
 function BracketView({user,onSave}){
   const [picks,setPicks]=useState(()=>user.picks?JSON.parse(JSON.stringify(user.picks)):emptyPicks());
-  const [tab,setTab]=useState("South");
-  const [saving,setSaving]=useState(false);
+  const [tab,setTab]=useState("South"); const [saving,setSaving]=useState(false);
 
   function pick(region,rk,gi,name){
-    const p=JSON.parse(JSON.stringify(picks));
-    p[region][rk][gi]=name;
-    const rounds=["r64","r32","s16","e8"];
-    const ri=rounds.indexOf(rk);
-    for(let r=ri+1;r<rounds.length;r++){
-      const n=8>>r;
-      for(let g=0;g<n;g++){
-        const prev=rounds[r-1];
-        const f1=p[region][prev][g*2],f2=p[region][prev][g*2+1];
-        if(p[region][rounds[r]][g]!==f1&&p[region][rounds[r]][g]!==f2)p[region][rounds[r]][g]=null;
-      }
-    }
-    const rIdx=REGIONS.indexOf(region);
-    if(!p[region].e8[0]){p.finalFour[rIdx]=null;p.semis=[null,null];p.champion=null;}
+    const p=JSON.parse(JSON.stringify(picks)); p[region][rk][gi]=name;
+    const rounds=["r64","r32","s16","e8"]; const ri=rounds.indexOf(rk);
+    for(let r=ri+1;r<rounds.length;r++){ const n=8>>r; for(let g=0;g<n;g++){ const prev=rounds[r-1]; const f1=p[region][prev][g*2],f2=p[region][prev][g*2+1]; if(p[region][rounds[r]][g]!==f1&&p[region][rounds[r]][g]!==f2)p[region][rounds[r]][g]=null; } }
+    const rIdx=REGIONS.indexOf(region); if(!p[region].e8[0]){p.finalFour[rIdx]=null;p.semis=[null,null];p.champion=null;}
     setPicks(p);
   }
   function pickSemi(slot,name){const p=JSON.parse(JSON.stringify(picks));p.semis[slot]=name;p.champion=null;setPicks(p);}
   function pickChamp(name){const p=JSON.parse(JSON.stringify(picks));p.champion=name;setPicks(p);}
-
-  async function handleSave(){
-    setSaving(true);
-    await onSave(picks);
-    setSaving(false);
-  }
+  async function handleSave(){setSaving(true);await onSave(picks);setSaving(false);}
 
   const done=REGIONS.every(r=>picks[r].e8[0])&&picks.semis.every(Boolean)&&picks.champion;
   const tSt=v=>({padding:"8px 14px",background:tab===v?C.redFaint:C.card,border:`1px solid ${tab===v?C.red:C.border}`,borderRadius:4,color:tab===v?"#fff":C.muted,cursor:"pointer",fontSize:13,fontWeight:tab===v?700:400});
@@ -519,21 +392,17 @@ function BracketView({user,onSave}){
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18,flexWrap:"wrap",gap:10}}>
         <div>
           <h2 style={{fontSize:24,fontWeight:900,margin:0,fontStyle:"italic"}}>{user.bracket_name}'s Bracket</h2>
-          <p style={{color:C.muted,fontSize:12,marginTop:3}}>Click a team to pick them as winner. Selections cascade automatically.</p>
+          <p style={{color:C.muted,fontSize:12,marginTop:3}}>Click a team to pick them as winner. Picks cascade automatically.</p>
         </div>
         <button onClick={handleSave} disabled={saving} style={{background:done?C.red:C.navyHi,color:"#fff",border:"none",borderRadius:6,padding:"11px 22px",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:7,opacity:saving?0.7:1}}>
-          {saving&&<span className="spin">⟳</span>}
-          {saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
+          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
         </button>
       </div>
       <div style={{display:"flex",gap:5,marginBottom:18,flexWrap:"wrap"}}>
         {REGIONS.map(r=><button key={r} style={tSt(r)} onClick={()=>setTab(r)}>{r}</button>)}
         <button style={tSt("Final")} onClick={()=>setTab("Final")}>🏆 Final Four</button>
       </div>
-      {tab!=="Final"
-        ?<RegionBracket region={tab} picks={picks} onPick={pick}/>
-        :<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp}/>
-      }
+      {tab!=="Final"?<RegionBracket region={tab} picks={picks} onPick={pick}/>:<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp}/>}
     </div>
   );
 }
@@ -545,8 +414,7 @@ function RegionBracket({region,picks,onPick}){
   const labels=["Round of 64","Round of 32","Sweet 16","Elite Eight"];
   function getOpts(ri,gi){
     if(ri===0)return[teams[gi*2],teams[gi*2+1]];
-    const prev=rounds[ri-1];
-    const a=picks[region][prev][gi*2],b=picks[region][prev][gi*2+1];
+    const prev=rounds[ri-1]; const a=picks[region][prev][gi*2],b=picks[region][prev][gi*2+1];
     return[a?{name:a,seed:SEEDS[a]}:null,b?{name:b,seed:SEEDS[b]}:null].filter(Boolean);
   }
   return(
@@ -560,9 +428,7 @@ function RegionBracket({region,picks,onPick}){
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {Array.from({length:nG}).map((_,gi)=>{
-                const opts=getOpts(ri,gi);
-                const picked=picks[region][rk][gi];
-                const actualW=ACTUAL[region]?.[rk]?.[gi];
+                const opts=getOpts(ri,gi); const picked=picks[region][rk][gi]; const actualW=ACTUAL[region]?.[rk]?.[gi];
                 return(
                   <div key={gi} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:6,padding:5,display:"flex",flexDirection:"column",gap:3}}>
                     {opts.length<2&&ri>0&&<div style={{color:C.dim,fontSize:10,textAlign:"center",padding:"7px 0"}}>← pick previous rounds</div>}
@@ -570,8 +436,7 @@ function RegionBracket({region,picks,onPick}){
                       if(!t)return null;
                       const nm=t.name||t,sd=t.seed||SEEDS[nm];
                       const isp=picked===nm,ok=isp&&actualW===nm,bad=isp&&actualW&&actualW!==nm;
-                      return<TBtn key={ti} name={nm} seed={sd} isPicked={isp} isCorrect={ok} isWrong={bad}
-                        bonus={ri===0&&ok?upsetBonus(sd):0} onClick={()=>onPick(region,rk,gi,nm)}/>;
+                      return<TBtn key={ti} name={nm} seed={sd} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={ri===0&&ok?upsetBonus(sd):0} onClick={()=>onPick(region,rk,gi,nm)}/>;
                     })}
                   </div>
                 );
@@ -614,26 +479,14 @@ function FinalFour({picks,onPickSemi,onPickChamp}){
           {picks.semis[0]&&picks.semis[1]
             ?[picks.semis[0],picks.semis[1]].map(t=>{
               const isp=picks.champion===t,ok=isp&&ACTUAL.champion===t,bad=isp&&ACTUAL.champion&&ACTUAL.champion!==t;
-              return(
-                <div key={t} style={{marginTop:7}}>
-                  <button onClick={()=>onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 12px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.red:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400}}>
-                    {t} {ok&&"🏆"}{bad&&"✗"}
-                  </button>
-                </div>
-              );
+              return<div key={t} style={{marginTop:7}}><button onClick={()=>onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 12px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.red:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400}}>{t} {ok&&"🏆"}{bad&&"✗"}</button></div>;
             })
             :<div style={{color:C.dim,fontSize:12,padding:"10px 0"}}>Pick both semis first</div>
           }
         </div>
         <SemiPanel slots={[1,3]} semiIdx={1}/>
       </div>
-      {picks.champion&&(
-        <div style={{textAlign:"center",marginTop:22,fontSize:17,color:C.muted}}>
-          Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>
-          {ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}
-          {ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.red}}> ✗</span>}
-        </div>
-      )}
+      {picks.champion&&<div style={{textAlign:"center",marginTop:22,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.red}}> ✗</span>}</div>}
     </div>
   );
 }
@@ -642,20 +495,14 @@ function FinalFour({picks,onPickSemi,onPickChamp}){
 function Leaderboard({entries,me,onEdit,onRefresh}){
   const [refreshing,setRefreshing]=useState(false);
   const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
-
-  async function handleRefresh(){
-    setRefreshing(true);
-    await onRefresh();
-    setRefreshing(false);
-  }
-
+  async function handleRefresh(){setRefreshing(true);await onRefresh();setRefreshing(false);}
   return(
     <div className="fade-in">
       <PrideBanner/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
         <div>
           <h2 style={{fontSize:28,fontWeight:900,margin:0,fontStyle:"italic"}}>Leaderboard</h2>
-          <p style={{color:C.muted,fontSize:12,marginTop:3}}>Scored vs 2025 results (test) · Live ESPN scoring activates with the 2026 bracket</p>
+          <p style={{color:C.muted,fontSize:12,marginTop:3}}>2026 Tournament · Scores update live as games complete</p>
         </div>
         <div style={{display:"flex",gap:8}}>
           <button onClick={handleRefresh} disabled={refreshing} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"7px 14px",borderRadius:4,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
@@ -669,23 +516,16 @@ function Leaderboard({entries,me,onEdit,onRefresh}){
         :(
           <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden",marginBottom:24}}>
             <div style={{display:"flex",padding:"9px 14px",borderBottom:`1px solid ${C.border}`,fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,gap:8}}>
-              <span style={{width:38}}>#</span><span style={{flex:1}}>Bracket</span>
-              <span style={{width:56,textAlign:"right"}}>Pts</span>
-              <span style={{width:120,textAlign:"right"}}>Champion Pick</span>
+              <span style={{width:38}}>#</span><span style={{flex:1}}>Bracket</span><span style={{width:56,textAlign:"right"}}>Pts</span><span style={{width:120,textAlign:"right"}}>Champion Pick</span>
             </div>
             {sorted.map((u,i)=>{
-              const isMe=me?.id===u.id;
-              const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
-              const champ=u.picks?.champion||"—";
-              const champOk=u.picks?.champion===ACTUAL.champion;
+              const isMe=me?.id===u.id; const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
+              const champ=u.picks?.champion||"—"; const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
               return(
                 <div key={u.id} style={{display:"flex",alignItems:"center",padding:"13px 14px",borderBottom:`1px solid ${C.border}`,gap:8,background:isMe?C.redFaint:i%2===0?C.card:C.surface,borderLeft:`3px solid ${isMe?C.red:"transparent"}`}}>
                   <span style={{width:38,fontSize:16}}>{medal}</span>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      {u.bracket_name}
-                      {isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}
-                    </div>
+                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>{u.bracket_name}{isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}</div>
                     <div style={{fontSize:11,color:C.dim,marginTop:1}}>{u.email}</div>
                   </div>
                   <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.red:"#fff"}}>{u.score||0}</span>
@@ -697,17 +537,17 @@ function Leaderboard({entries,me,onEdit,onRefresh}){
         )
       }
       <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:18}}>
-        <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:14}}>2025 Actual Results — Test Data</div>
+        <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:14}}>2026 Tournament Status</div>
         <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           {REGIONS.map(r=>(
             <div key={r} style={{flex:"1 1 130px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"10px 13px",fontSize:12,lineHeight:1.9}}>
               <strong style={{color:C.red}}>{r}</strong><br/>
-              <span style={{color:C.muted}}>Champ: {ACTUAL[r]?.e8?.[0]||"TBD"}</span>
+              <span style={{color:C.muted}}>1-seed: {BRACKET[r][0].name}</span>
             </div>
           ))}
           <div style={{flex:"1 1 130px",background:C.bg,border:`1px solid ${C.red}55`,borderRadius:6,padding:"10px 13px",fontSize:12,lineHeight:1.9}}>
             <strong style={{color:C.red}}>🏆 Champion</strong><br/>
-            <span style={{color:"#fff",fontWeight:700}}>{ACTUAL.champion||"TBD"}</span>
+            <span style={{color:ACTUAL.champion?"#fff":C.dim,fontWeight:ACTUAL.champion?700:400}}>{ACTUAL.champion||"TBD"}</span>
           </div>
         </div>
       </div>
@@ -733,18 +573,17 @@ function ScoringGuide(){
         </div>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
           <h3 style={{fontSize:14,fontWeight:700,color:C.red,marginBottom:14}}>🚀 Upset Bonus (Round of 64 only)</h3>
-          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:12}}>Pick a double-digit seed upset in R64 and earn big if you're right:</p>
+          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:12}}>Pick a double-digit seed to win in R64 and earn extra points:</p>
           <div style={{background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"9px 12px",fontSize:13,color:"#7bc3ff",fontFamily:"monospace",marginBottom:14}}>Bonus = Winner's Seed ÷ 2</div>
           {[[12,5,6],[13,4,6],[14,3,7],[15,2,7],[16,1,8]].map(([ws,ls,b])=>(
             <div key={ws} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.border}`,fontSize:13}}>
-              <span style={{color:C.muted}}>#{ws} upsets #{ls}</span>
-              <span style={{color:C.red,fontWeight:700}}>+{b} pts</span>
+              <span style={{color:C.muted}}>#{ws} upsets #{ls}</span><span style={{color:C.red,fontWeight:700}}>+{b} pts</span>
             </div>
           ))}
         </div>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
-          <h3 style={{fontSize:14,fontWeight:700,color:C.red,marginBottom:14}}>📊 Scoring Example</h3>
-          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:12}}>You correctly pick #12 Colorado State to upset #5 Memphis in R64:</p>
+          <h3 style={{fontSize:14,fontWeight:700,color:C.red,marginBottom:14}}>📊 Example Score</h3>
+          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:12}}>You correctly pick #12 Akron to upset #5 Texas Tech in R64:</p>
           {[["R64 correct pick","+1 pt"],["Upset bonus (#12 ÷ 2)","+6 pts"]].map(([l,v])=>(
             <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.border}`,fontSize:13}}>
               <span style={{color:C.muted}}>{l}</span><span style={{color:"#fff",fontWeight:700}}>{v}</span>
@@ -753,13 +592,13 @@ function ScoringGuide(){
           <div style={{display:"flex",justifyContent:"space-between",padding:"9px 0",fontSize:14,borderTop:`2px solid ${C.navyHi}`,marginTop:2}}>
             <strong style={{color:"#fff"}}>Total for that pick</strong><strong style={{color:C.red}}>7 pts</strong>
           </div>
-          <p style={{color:C.dim,fontSize:12,marginTop:12,lineHeight:1.6}}>Cinderella picks are high-risk, high-reward. Go bold — only pride is at stake.</p>
+          <p style={{color:C.dim,fontSize:12,marginTop:12,lineHeight:1.6}}>Go bold. Only pride is at stake.</p>
         </div>
       </div>
       <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:10,padding:22}}>
         <h3 style={{fontSize:14,fontWeight:700,color:"#7bc3ff",marginBottom:10}}>📡 Live Score Updates via ESPN</h3>
         <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>
-          ZikaMadness polls ESPN's public scoreboard API every <strong style={{color:"#fff"}}>60 seconds</strong> during the tournament. As games finish, scores update automatically. The ESPN indicator in the top bar shows live status. When the 2026 bracket drops on <strong style={{color:"#fff"}}>Selection Sunday (March 15)</strong>, live scoring activates automatically.
+          ZikaMadness polls ESPN's public scoreboard API every <strong style={{color:"#fff"}}>60 seconds</strong>. As games finish, scores update automatically. The ESPN indicator in the top bar shows live status. <strong style={{color:"#fff"}}>First round begins Thursday, March 19.</strong> Final Four is April 4 in Indianapolis. Championship is April 6.
         </p>
       </div>
     </div>
