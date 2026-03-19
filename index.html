@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ZikaMadness 🏀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -30,6 +30,49 @@
   .live-dot { width:7px;height:7px;border-radius:50%;background:#9b0e22;display:inline-block;margin-right:5px;animation:pulse-dot 1.3s infinite; }
   .pride-box { background:linear-gradient(135deg,#0a1520 0%,#160610 100%); border:1px solid #9b0e2255; border-left:4px solid #9b0e22; border-radius:8px; padding:14px 18px; margin-bottom:26px; font-size:13px; color:#9aa0b0; line-height:1.75; }
   .pride-box strong { color:#e2e4ec; }
+
+  /* ── FINAL FOUR MOBILE LAYOUT ── */
+  .ff-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  @media (max-width: 600px) {
+    .ff-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+    }
+    .ff-champ-box { order: 3; }
+    .ff-semi-0   { order: 1; }
+    .ff-semi-1   { order: 2; }
+  }
+
+  /* ── LOCK BANNER ── */
+  .lock-banner {
+    background: linear-gradient(135deg, #1a1200 0%, #0f0a00 100%);
+    border: 1px solid #b8860b88;
+    border-left: 4px solid #b8860b;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #c8a830;
+    line-height: 1.6;
+  }
+
+  /* ── VIEW-ONLY BRACKET ── */
+  .view-only-banner {
+    background: linear-gradient(135deg, #0a1520 0%, #060d18 100%);
+    border: 1px solid #2563a855;
+    border-left: 4px solid #2563a8;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #7bc3ff;
+    line-height: 1.6;
+  }
 </style>
 </head>
 <body>
@@ -42,13 +85,26 @@ const SUPA_URL = "https://mmjgjifdnbjugzxxkauk.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tamdqaWZkbmJqdWd6eHhrYXVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY1NTEsImV4cCI6MjA4ODczMjU1MX0.nIBgAhRvg3uXdFvjs0nECY1kAvrC18L_qmwnArNHDEE";
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+/* ── BRACKET LOCK ──
+   Locks at 11:00 AM CST on Thursday March 19, 2026.
+   CST = UTC-6, so 11:00 AM CST = 17:00 UTC.
+── */
+const LOCK_TIME = new Date("2026-03-19T17:00:00Z");
+function isBracketLocked() { return new Date() >= LOCK_TIME; }
+function lockCountdown() {
+  const diff = LOCK_TIME - new Date();
+  if (diff <= 0) return null;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h > 48) { const d = Math.floor(h/24); return `${d} day${d!==1?"s":""}`; }
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} minute${m!==1?"s":""}`;
+}
+
 /* ── PALETTE ── */
 const C = {
   bg:"#080b10", surface:"#0c0f16", card:"#0f1219", border:"#191e2c",
-  red:"#9b0e22",       // darker crimson
-  redHi:"#b81228",     // slightly lighter for hover/glow
-  redDim:"#5a0813",
-  redFaint:"#9b0e2218",
+  red:"#9b0e22", redHi:"#b81228", redDim:"#5a0813", redFaint:"#9b0e2218",
   navy:"#0d2b4e", navyHi:"#1e3a5f", navyBright:"#2563a8",
   green:"#1db954", greenDim:"#0a2e18",
   text:"#e2e4ec", muted:"#7a8090", dim:"#343a4a",
@@ -58,32 +114,12 @@ const C = {
 const ROUND_PTS = [1,1,2,3,5,8];
 const REGIONS   = ["South","East","West","Midwest"];
 
-/*
-  UPSET BONUS — applies to ALL rounds (not just R64).
-  Bonus = floor( (loser_seed - winner_seed) / 2 )
-  i.e. the seed difference of the two teams playing, divided by 2.
-  Examples:
-    #12 beats #5  → floor((12-5)/2)  = floor(3.5) = 3 pts
-    #7  beats #2  → floor((7-2)/2)   = floor(2.5) = 2 pts
-    #11 beats #6  → floor((11-6)/2)  = floor(2.5) = 2 pts
-    #15 beats #2  → floor((15-2)/2)  = floor(6.5) = 6 pts
-    #16 beats #1  → floor((16-1)/2)  = floor(7.5) = 7 pts
-  Only awarded when the higher seed (bigger number) wins.
-*/
 function upsetBonus(winnerSeed, loserSeed) {
-  if (!winnerSeed || !loserSeed) return 0;
-  if (winnerSeed <= loserSeed) return 0; // no upset, no bonus
+  if (!winnerSeed || !loserSeed || winnerSeed <= loserSeed) return 0;
   return Math.floor((winnerSeed - loserSeed) / 2);
 }
 
-/* ── 2026 BRACKET ──
-   First Four (Mar 17-18) play-in slots:
-   - South #16: Prairie View A&M vs Lehigh  → winner plays Florida
-   - West  #11: Texas vs NC State           → winner plays BYU
-   - Midwest #11: SMU vs Miami (OH)         → winner plays Tennessee
-   - Midwest #16: UMBC vs Howard            → winner plays Michigan
-   Update those name strings once results are in.
-── */
+/* ── 2026 BRACKET ── */
 const BRACKET = {
   South: [
     {seed:1, name:"Florida"},        {seed:16,name:"Prairie View/Lehigh"},
@@ -127,55 +163,39 @@ const BRACKET = {
   ],
 };
 
-/* ── ACTUAL RESULTS (blank — fill in as games are played) ── */
 const ACTUAL = {
   South:   {r64:[],r32:[],s16:[],e8:[]},
   East:    {r64:[],r32:[],s16:[],e8:[]},
   West:    {r64:[],r32:[],s16:[],e8:[]},
   Midwest: {r64:[],r32:[],s16:[],e8:[]},
-  finalFour: [],
-  semis: [],
-  champion: null,
+  finalFour: [], semis: [], champion: null,
 };
 
-/* Seed lookup — build from bracket */
 const SEEDS={};
 REGIONS.forEach(r=>BRACKET[r].forEach(t=>{SEEDS[t.name]=t.seed;}));
 
-/*
-  For upset bonus we need to know the OPPONENT's seed when scoring.
-  We reconstruct matchups: in each round, game gi pits slots gi*2 vs gi*2+1
-  from the previous round's winners (or the initial bracket for R64).
-  Since we store only the winner name, we derive opponent seed from the bracket structure.
-*/
 function getMatchupSeeds(region, roundKey, gameIdx, actualResults) {
   const rounds = ["r64","r32","s16","e8"];
   const ri = rounds.indexOf(roundKey);
   if (ri === 0) {
-    // R64: direct from bracket
-    const t1 = BRACKET[region][gameIdx * 2];
-    const t2 = BRACKET[region][gameIdx * 2 + 1];
-    return [t1.seed, t2.seed];
+    return [BRACKET[region][gameIdx*2].seed, BRACKET[region][gameIdx*2+1].seed];
   }
-  // For later rounds, get the two teams that advanced from previous round
-  const prevRound = rounds[ri - 1];
-  const prevWinner1 = actualResults[region]?.[prevRound]?.[gameIdx * 2];
-  const prevWinner2 = actualResults[region]?.[prevRound]?.[gameIdx * 2 + 1];
-  return [SEEDS[prevWinner1] || null, SEEDS[prevWinner2] || null];
+  const prevRound = rounds[ri-1];
+  const w1 = actualResults[region]?.[prevRound]?.[gameIdx*2];
+  const w2 = actualResults[region]?.[prevRound]?.[gameIdx*2+1];
+  return [SEEDS[w1]||null, SEEDS[w2]||null];
 }
 
 function calcScore(picks, actual) {
   let s = 0;
   REGIONS.forEach(r => {
     ["r64","r32","s16","e8"].forEach((rk, ri) => {
-      (actual[r]?.[rk] || []).forEach((winner, gi) => {
+      (actual[r]?.[rk]||[]).forEach((winner, gi) => {
         if (picks[r]?.[rk]?.[gi] === winner) {
           s += ROUND_PTS[ri];
-          // Upset bonus: need opponent seed
-          const [seed1, seed2] = getMatchupSeeds(r, rk, gi, actual);
-          const winnerSeed = SEEDS[winner];
-          const loserSeed  = (seed1 === winnerSeed) ? seed2 : seed1;
-          s += upsetBonus(winnerSeed, loserSeed);
+          const [s1,s2] = getMatchupSeeds(r, rk, gi, actual);
+          const ws = SEEDS[winner]; const ls = (s1===ws)?s2:s1;
+          s += upsetBonus(ws, ls);
         }
       });
     });
@@ -192,7 +212,7 @@ function emptyPicks(){
   return p;
 }
 
-/* ── ESPN POLLING ── */
+/* ── ESPN ── */
 const ESPN_URL="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200";
 async function fetchESPN(){
   try{
@@ -207,14 +227,30 @@ async function dbGetEntries(){ const {data}=await sb.from("entries").select("*")
 async function dbUpsertEntry(e){ const {data}=await sb.from("entries").upsert(e,{onConflict:"email"}).select().single(); return data; }
 async function dbGetByEmail(email){ const {data}=await sb.from("entries").select("*").eq("email",email.toLowerCase()).single(); return data||null; }
 
-/* ── PRIDE BANNER ── */
+/* ── SHARED COMPONENTS ── */
 function PrideBanner(){
   return(
     <div className="pride-box">
       <strong>🏅 Official ZikaMadness Rules — Please Read</strong><br/>
-      This is a <strong>pride-only</strong> competition. <strong>There is absolutely no prize.</strong> No cash, no gift cards, no trophies — nothing tangible changes hands. The sole reward for winning ZikaMadness is eternal bragging rights within the Zika family and the right to talk insufferably about your bracket for exactly one calendar year. Participate accordingly.
+      This is a <strong>pride-only</strong> competition. <strong>There is absolutely no prize.</strong> No cash, no gift cards, no trophies — nothing tangible changes hands. The sole reward is eternal bragging rights within the Zika family for one calendar year. Participate accordingly.
     </div>
   );
+}
+
+function LockBanner(){
+  const locked = isBracketLocked();
+  const cd = lockCountdown();
+  if (locked) return(
+    <div className="lock-banner">
+      🔒 <strong>Brackets are locked.</strong> The tournament has begun — no new entries or edits are allowed. Good luck!
+    </div>
+  );
+  if (cd) return(
+    <div className="lock-banner">
+      ⏳ <strong>Brackets lock in {cd}</strong> — at 11:00 AM CST on Thursday, March 19. Submit or finalize your picks before then!
+    </div>
+  );
+  return null;
 }
 
 /* ── APP ── */
@@ -222,6 +258,7 @@ function App(){
   const [view,setView]=useState("landing");
   const [entries,setEntries]=useState([]);
   const [me,setMe]=useState(null);
+  const [viewingEntry,setViewingEntry]=useState(null); // entry being viewed (not me)
   const [notif,setNotif]=useState(null);
   const [espnOk,setEspnOk]=useState(null);
   const [liveCount,setLiveCount]=useState(0);
@@ -246,7 +283,13 @@ function App(){
   function notify(msg,type="ok"){ setNotif({msg,type}); setTimeout(()=>setNotif(null),3400); }
   async function refreshEntries(){ const all=await dbGetEntries(); setEntries(all); if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);} }
 
+  function handleViewEntry(entry){
+    setViewingEntry(entry);
+    setView("view-bracket");
+  }
+
   async function handleRegister(email,bracketName){
+    if(isBracketLocked()){notify("Brackets are locked — the tournament has started.","err");return;}
     const existing=await dbGetByEmail(email);
     if(existing){ setMe(existing); sessionStorage.setItem("zm_email",existing.email); await refreshEntries(); setView(existing.picks?"leaderboard":"bracket"); notify(`Welcome back, ${existing.bracket_name}!`); return; }
     const saved=await dbUpsertEntry({email:email.toLowerCase(),bracket_name:bracketName,picks:null,score:0});
@@ -256,6 +299,7 @@ function App(){
   }
 
   async function handleSavePicks(picks){
+    if(isBracketLocked()){notify("Brackets are locked — no edits allowed.","err");return;}
     const score=calcScore(picks,ACTUAL);
     const saved=await dbUpsertEntry({...me,picks,score});
     if(!saved){notify("Error saving — please try again.","err");return;}
@@ -276,27 +320,29 @@ function App(){
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.text}}>
       {notif&&<div className="notif" style={{position:"fixed",top:64,right:14,zIndex:400,background:notif.type==="err"?C.redDim:C.greenDim,border:`1px solid ${notif.type==="err"?C.red:C.green}`,color:"#fff",padding:"11px 18px",borderRadius:8,fontWeight:700,fontSize:13,boxShadow:"0 6px 28px rgba(0,0,0,0.7)",maxWidth:300}}>{notif.msg}</div>}
-      <Header me={me} view={view} setView={setView} logout={handleLogout} espnOk={espnOk} liveCount={liveCount}/>
+      <Header me={me} view={view} setView={setView} logout={handleLogout} espnOk={espnOk} liveCount={liveCount} viewingEntry={viewingEntry}/>
       <main style={{maxWidth:1100,margin:"0 auto",padding:"22px 14px 90px"}}>
-        {view==="landing"    &&<Landing onStart={()=>setView("register")}/>}
-        {view==="register"   &&<Register entries={entries} onRegister={handleRegister}/>}
-        {view==="bracket"    &&me&&<BracketView user={me} onSave={handleSavePicks}/>}
-        {view==="leaderboard"&&<Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries}/>}
-        {view==="scoring"    &&<ScoringGuide/>}
-        {!me&&!["landing","register","scoring"].includes(view)&&(
+        {view==="landing"      && <Landing onStart={()=>setView("register")}/>}
+        {view==="register"     && <Register entries={entries} onRegister={handleRegister}/>}
+        {view==="bracket"      && me && <BracketView user={me} onSave={handleSavePicks} readOnly={false}/>}
+        {view==="view-bracket" && viewingEntry && <BracketView user={viewingEntry} onSave={null} readOnly={true} onBack={()=>setView("leaderboard")}/>}
+        {view==="leaderboard"  && <Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries} onViewEntry={handleViewEntry}/>}
+        {view==="scoring"      && <ScoringGuide/>}
+        {!me&&!["landing","register","scoring","view-bracket"].includes(view)&&(
           <div style={{textAlign:"center",padding:"80px 20px"}}><p style={{color:C.muted,fontSize:16}}>Please <button onClick={()=>setView("register")} style={{background:"none",border:"none",color:C.red,fontSize:16,textDecoration:"underline",cursor:"pointer"}}>sign in</button> to continue.</p></div>
         )}
       </main>
       <footer style={{position:"fixed",bottom:0,left:0,right:0,background:C.surface,borderTop:`1px solid ${C.border}`,padding:"9px 14px",textAlign:"center",fontSize:11,color:C.dim}}>
-        🏀 ZikaMadness 2026 · Family Bracket Pool · First Round March 19–20 · Live scores via ESPN
+        🏀 ZikaMadness 2026 · Family Bracket Pool · Locks 11AM CST March 19 · Live scores via ESPN
       </footer>
     </div>
   );
 }
 
 /* ── HEADER ── */
-function Header({me,view,setView,logout,espnOk,liveCount}){
+function Header({me,view,setView,logout,espnOk,liveCount,viewingEntry}){
   const nb=v=>({background:"transparent",border:`1px solid ${view===v?C.red:C.border}`,color:view===v?"#fff":C.muted,padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:view===v?700:400});
+  const isViewingOther = view==="view-bracket" && viewingEntry;
   return(
     <header style={{background:C.surface,borderBottom:`3px solid ${C.red}`,position:"sticky",top:0,zIndex:200}}>
       <div style={{maxWidth:1100,margin:"0 auto",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
@@ -313,25 +359,30 @@ function Header({me,view,setView,logout,espnOk,liveCount}){
         </div>
         <nav style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           {me&&<button style={nb("leaderboard")} onClick={()=>setView("leaderboard")}>Leaderboard</button>}
-          {me&&<button style={nb("bracket")} onClick={()=>setView("bracket")}>My Bracket</button>}
+          {me&&!isViewingOther&&<button style={nb("bracket")} onClick={()=>setView("bracket")}>My Bracket</button>}
           <button style={nb("scoring")} onClick={()=>setView("scoring")}>Scoring</button>
           {me?<button onClick={logout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.dim,padding:"6px 13px",borderRadius:4,fontSize:13}}>Sign Out</button>
              :<button onClick={()=>setView("register")} style={{background:C.red,border:"none",color:"#fff",padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:700}}>Sign In</button>}
         </nav>
       </div>
-      {me&&<div style={{maxWidth:1100,margin:"0 auto",padding:"1px 14px 7px",fontSize:11,color:C.dim}}>Signed in as <strong style={{color:C.muted}}>{me.bracket_name}</strong> · {me.email}</div>}
+      {me&&<div style={{maxWidth:1100,margin:"0 auto",padding:"1px 14px 7px",fontSize:11,color:C.dim}}>
+        Signed in as <strong style={{color:C.muted}}>{me.bracket_name}</strong>
+        {isViewingOther&&<span style={{color:C.navyBright}}> · Viewing: <strong>{viewingEntry.bracket_name}</strong></span>}
+        {isBracketLocked()&&<span style={{color:"#b8860b",marginLeft:8}}>🔒 Brackets locked</span>}
+      </div>}
     </header>
   );
 }
 
 /* ── LANDING ── */
 function Landing({onStart}){
+  const locked=isBracketLocked(); const cd=lockCountdown();
   return(
     <div style={{minHeight:"80vh",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",padding:"40px 0"}}>
       <div style={{position:"absolute",top:"-15%",left:"50%",transform:"translateX(-50%)",width:700,height:700,borderRadius:"50%",background:`radial-gradient(circle,${C.red}0b 0%,transparent 68%)`,pointerEvents:"none"}}/>
       <div className="fade-in" style={{textAlign:"center",position:"relative",zIndex:2,maxWidth:640,padding:"0 16px"}}>
         <div style={{display:"inline-block",background:C.redFaint,border:`1px solid ${C.red}55`,color:C.redHi,padding:"5px 16px",borderRadius:20,fontSize:11,marginBottom:22,letterSpacing:1.5,fontWeight:700}}>
-          2026 TOURNAMENT · FIRST ROUND MARCH 19–20
+          {locked?"🔒 BRACKETS LOCKED · TOURNAMENT UNDERWAY":cd?`⏳ LOCKS IN ${cd.toUpperCase()} · ENTER NOW`:"2026 TOURNAMENT · FIRST ROUND MARCH 19–20"}
         </div>
         <h1 style={{fontSize:"clamp(50px,12vw,106px)",fontWeight:900,lineHeight:0.88,margin:"0 0 20px",fontStyle:"italic",letterSpacing:-1}}>
           <span style={{color:C.red,textShadow:`0 0 50px ${C.redHi}66`}}>Z</span>ika<br/>
@@ -350,13 +401,13 @@ function Landing({onStart}){
           ))}
         </div>
         <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:8,padding:"11px 17px",marginBottom:14,fontSize:13,color:C.muted}}>
-          🎯 <strong style={{color:"#fff"}}>Upset Bonus (all rounds):</strong> Pick an upset correctly → bonus = seed difference ÷ 2
+          🎯 <strong style={{color:"#fff"}}>Upset Bonus (all rounds):</strong> Pick an upset → bonus = seed difference ÷ 2
         </div>
         <div style={{background:C.redFaint,border:`1px solid ${C.red}44`,borderRadius:8,padding:"11px 17px",marginBottom:30,fontSize:12,color:C.muted,textAlign:"left",lineHeight:1.7}}>
           🏅 <strong style={{color:"#fff"}}>No prize. Only pride.</strong> Winning earns you one year of Zika family bragging rights and nothing else.
         </div>
         <button className="cta-btn" onClick={onStart} style={{background:C.red,color:"#fff",border:"none",padding:"15px 42px",fontSize:17,fontWeight:900,borderRadius:4,letterSpacing:0.5}}>
-          Enter Your Bracket →
+          {locked?"View the Leaderboard →":"Enter Your Bracket →"}
         </button>
       </div>
       {["🏀","🎯","🏆","⛹️","📊"].map((e,i)=>(
@@ -369,30 +420,32 @@ function Landing({onStart}){
 /* ── REGISTER ── */
 function Register({entries,onRegister}){
   const [email,setEmail]=useState(""); const [name,setName]=useState(""); const [mode,setMode]=useState("new"); const [saving,setSaving]=useState(false);
+  const locked=isBracketLocked();
   const found=entries.find(e=>e.email===email.toLowerCase());
-  async function submit(){ if(!email.trim())return; if(mode==="new"&&!name.trim())return; setSaving(true); await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim()); setSaving(false); }
+  async function submit(){ if(locked)return; if(!email.trim())return; if(mode==="new"&&!name.trim())return; setSaving(true); await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim()); setSaving(false); }
   const tabSt=m=>({flex:1,padding:"10px 0",border:"none",background:mode===m?C.red:"transparent",color:mode===m?"#fff":C.muted,fontWeight:mode===m?700:400,fontSize:14});
   const inp={width:"100%",background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"11px 13px",color:C.text,fontSize:15,marginBottom:16};
   return(
     <div style={{maxWidth:460,margin:"0 auto",padding:"32px 0"}}>
       <PrideBanner/>
-      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28}}>
+      {locked&&<div className="lock-banner">🔒 <strong>Brackets are locked.</strong> The tournament has started — new entries are no longer accepted.</div>}
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28,opacity:locked?0.6:1}}>
         <h2 style={{fontSize:26,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>Join the Pool</h2>
         <p style={{color:C.muted,fontSize:13,marginBottom:22}}>One bracket entry per email. No exceptions.</p>
         <div style={{display:"flex",border:`1px solid ${C.border}`,borderRadius:6,overflow:"hidden",marginBottom:22}}>
-          <button style={tabSt("new")} onClick={()=>setMode("new")}>New Entry</button>
+          <button style={tabSt("new")} onClick={()=>!locked&&setMode("new")} disabled={locked}>New Entry</button>
           <button style={tabSt("returning")} onClick={()=>setMode("returning")}>Returning Player</button>
         </div>
         <label style={{display:"block",fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Email Address</label>
-        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" style={inp} onKeyDown={e=>e.key==="Enter"&&submit()}/>
-        {mode==="new"&&<>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" style={inp} disabled={locked} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+        {mode==="new"&&!locked&&<>
           <label style={{display:"block",fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Bracket Name</label>
           <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Uncle Dave's Dark Horses" maxLength={40} style={inp} onKeyDown={e=>e.key==="Enter"&&submit()}/>
         </>}
         {mode==="returning"&&found&&<div style={{background:C.greenDim,border:`1px solid ${C.green}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.green,marginBottom:16}}>✓ Found: <strong>{found.bracket_name}</strong></div>}
         {mode==="returning"&&email.length>4&&!found&&<div style={{background:C.redFaint,border:`1px solid ${C.red}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.redHi,marginBottom:16}}>No entry found — try "New Entry".</div>}
-        <button onClick={submit} disabled={saving} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":mode==="new"?"Create My Bracket →":"Sign Back In →"}
+        <button onClick={submit} disabled={saving||locked} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving&&!locked?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":locked?"Brackets Locked 🔒":mode==="new"?"Create My Bracket →":"Sign Back In →"}
         </button>
       </div>
     </div>
@@ -400,12 +453,12 @@ function Register({entries,onRegister}){
 }
 
 /* ── TEAM BUTTON ── */
-function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick}){
+function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick,readOnly}){
   const bg=isCorrect?C.greenDim:isWrong?`${C.red}18`:isPicked?C.navy:C.bg;
   const brd=isCorrect?C.green:isWrong?C.red:isPicked?C.navyBright:C.border;
   const col=isCorrect?C.green:isWrong?C.redHi:isPicked?"#c8e0ff":C.muted;
   return(
-    <button onClick={onClick} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 9px",background:bg,border:`1px solid ${brd}`,borderRadius:4,color:col,fontSize:12,textAlign:"left",width:"100%",transition:"all 0.1s"}}>
+    <button onClick={readOnly?undefined:onClick} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 9px",background:bg,border:`1px solid ${brd}`,borderRadius:4,color:col,fontSize:12,textAlign:"left",width:"100%",cursor:readOnly?"default":"pointer"}}>
       <span style={{background:C.navy,color:C.navyBright,border:`1px solid ${C.navyHi}`,borderRadius:3,padding:"1px 5px",fontSize:10,fontWeight:700,minWidth:20,textAlign:"center"}}>{seed}</span>
       <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</span>
       {bonus>0&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"1px 5px",fontSize:9,fontWeight:700,flexShrink:0}}>+{bonus}</span>}
@@ -415,48 +468,64 @@ function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick}){
   );
 }
 
-/* ── BRACKET VIEW ── */
-function BracketView({user,onSave}){
+/* ── BRACKET VIEW (shared for editing + read-only) ── */
+function BracketView({user, onSave, readOnly, onBack}){
   const [picks,setPicks]=useState(()=>user.picks?JSON.parse(JSON.stringify(user.picks)):emptyPicks());
   const [tab,setTab]=useState("South"); const [saving,setSaving]=useState(false);
+  const locked=isBracketLocked();
+  const effectiveReadOnly = readOnly || locked;
 
   function pick(region,rk,gi,name){
+    if(effectiveReadOnly)return;
     const p=JSON.parse(JSON.stringify(picks)); p[region][rk][gi]=name;
     const rounds=["r64","r32","s16","e8"]; const ri=rounds.indexOf(rk);
     for(let r=ri+1;r<rounds.length;r++){ const n=8>>r; for(let g=0;g<n;g++){ const prev=rounds[r-1]; const f1=p[region][prev][g*2],f2=p[region][prev][g*2+1]; if(p[region][rounds[r]][g]!==f1&&p[region][rounds[r]][g]!==f2)p[region][rounds[r]][g]=null; } }
     const rIdx=REGIONS.indexOf(region); if(!p[region].e8[0]){p.finalFour[rIdx]=null;p.semis=[null,null];p.champion=null;}
     setPicks(p);
   }
-  function pickSemi(slot,name){const p=JSON.parse(JSON.stringify(picks));p.semis[slot]=name;p.champion=null;setPicks(p);}
-  function pickChamp(name){const p=JSON.parse(JSON.stringify(picks));p.champion=name;setPicks(p);}
-  async function handleSave(){setSaving(true);await onSave(picks);setSaving(false);}
+  function pickSemi(slot,name){if(effectiveReadOnly)return;const p=JSON.parse(JSON.stringify(picks));p.semis[slot]=name;p.champion=null;setPicks(p);}
+  function pickChamp(name){if(effectiveReadOnly)return;const p=JSON.parse(JSON.stringify(picks));p.champion=name;setPicks(p);}
+  async function handleSave(){if(effectiveReadOnly)return;setSaving(true);await onSave(picks);setSaving(false);}
 
   const done=REGIONS.every(r=>picks[r].e8[0])&&picks.semis.every(Boolean)&&picks.champion;
   const tSt=v=>({padding:"8px 14px",background:tab===v?C.redFaint:C.card,border:`1px solid ${tab===v?C.red:C.border}`,borderRadius:4,color:tab===v?"#fff":C.muted,cursor:"pointer",fontSize:13,fontWeight:tab===v?700:400});
 
   return(
     <div className="fade-in">
-      <PrideBanner/>
+      {readOnly
+        ? <div className="view-only-banner">👁 <strong>Viewing {user.bracket_name}'s bracket</strong> — read only. <button onClick={onBack} style={{background:"none",border:"none",color:C.navyBright,fontSize:13,cursor:"pointer",textDecoration:"underline",marginLeft:8}}>← Back to Leaderboard</button></div>
+        : <PrideBanner/>
+      }
+      {!readOnly&&locked&&<div className="lock-banner">🔒 <strong>Brackets are locked</strong> — viewing your picks (no edits allowed).</div>}
+      {!readOnly&&!locked&&lockCountdown()&&<LockBanner/>}
+
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18,flexWrap:"wrap",gap:10}}>
         <div>
-          <h2 style={{fontSize:24,fontWeight:900,margin:0,fontStyle:"italic"}}>{user.bracket_name}'s Bracket</h2>
-          <p style={{color:C.muted,fontSize:12,marginTop:3}}>Click a team to pick them. Selections cascade automatically.</p>
+          <h2 style={{fontSize:24,fontWeight:900,margin:0,fontStyle:"italic"}}>{user.bracket_name}{readOnly?" — View Only":""}</h2>
+          {!effectiveReadOnly&&<p style={{color:C.muted,fontSize:12,marginTop:3}}>Click a team to pick them. Selections cascade automatically.</p>}
+          {effectiveReadOnly&&!readOnly&&<p style={{color:"#b8860b",fontSize:12,marginTop:3}}>🔒 The tournament has started — your picks are locked in.</p>}
         </div>
-        <button onClick={handleSave} disabled={saving} style={{background:done?C.red:C.navyHi,color:"#fff",border:"none",borderRadius:6,padding:"11px 22px",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:7,opacity:saving?0.7:1}}>
-          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
-        </button>
+        {!effectiveReadOnly&&(
+          <button onClick={handleSave} disabled={saving} style={{background:done?C.red:C.navyHi,color:"#fff",border:"none",borderRadius:6,padding:"11px 22px",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:7,opacity:saving?0.7:1}}>
+            {saving&&<span className="spin">⟳</span>}{saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
+          </button>
+        )}
       </div>
+
       <div style={{display:"flex",gap:5,marginBottom:18,flexWrap:"wrap"}}>
         {REGIONS.map(r=><button key={r} style={tSt(r)} onClick={()=>setTab(r)}>{r}</button>)}
         <button style={tSt("Final")} onClick={()=>setTab("Final")}>🏆 Final Four</button>
       </div>
-      {tab!=="Final"?<RegionBracket region={tab} picks={picks} onPick={pick}/>:<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp}/>}
+      {tab!=="Final"
+        ?<RegionBracket region={tab} picks={picks} onPick={pick} readOnly={effectiveReadOnly}/>
+        :<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp} readOnly={effectiveReadOnly}/>
+      }
     </div>
   );
 }
 
 /* ── REGION BRACKET ── */
-function RegionBracket({region,picks,onPick}){
+function RegionBracket({region,picks,onPick,readOnly}){
   const teams=BRACKET[region];
   const rounds=["r64","r32","s16","e8"];
   const labels=["Round of 64","Round of 32","Sweet 16","Elite Eight"];
@@ -470,14 +539,13 @@ function RegionBracket({region,picks,onPick}){
       {rounds.map((rk,ri)=>{
         const nG=8>>ri;
         return(
-          <div key={rk} style={{flex:"0 0 188px"}}>
+          <div key={rk} style={{flex:"0 0 180px"}}>
             <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:8,paddingBottom:5,borderBottom:`1px solid ${C.border}`}}>
               {labels[ri]} <span style={{color:C.redHi}}>({ROUND_PTS[ri]}pt)</span>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {Array.from({length:nG}).map((_,gi)=>{
                 const opts=getOpts(ri,gi); const picked=picks[region][rk][gi]; const actualW=ACTUAL[region]?.[rk]?.[gi];
-                // calc bonus to display if correct
                 let bonus=0;
                 if(actualW&&picked===actualW){
                   const [s1,s2]=getMatchupSeeds(region,rk,gi,ACTUAL);
@@ -491,7 +559,7 @@ function RegionBracket({region,picks,onPick}){
                       if(!t)return null;
                       const nm=t.name||t,sd=t.seed||SEEDS[nm];
                       const isp=picked===nm,ok=isp&&actualW===nm,bad=isp&&actualW&&actualW!==nm;
-                      return<TBtn key={ti} name={nm} seed={sd} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={ok?bonus:0} onClick={()=>onPick(region,rk,gi,nm)}/>;
+                      return<TBtn key={ti} name={nm} seed={sd} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={ok?bonus:0} readOnly={readOnly} onClick={()=>onPick(region,rk,gi,nm)}/>;
                     })}
                   </div>
                 );
@@ -504,93 +572,137 @@ function RegionBracket({region,picks,onPick}){
   );
 }
 
-/* ── FINAL FOUR ── */
-function FinalFour({picks,onPickSemi,onPickChamp}){
+/* ── FINAL FOUR — mobile-first grid layout ── */
+function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
   const champs=REGIONS.map(r=>picks[r].e8[0]);
-  function SemiPanel({slots,semiIdx}){
+
+  function SemiPanel({slots,semiIdx,className}){
     return(
-      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:18,flex:1,minWidth:0}}>
-        <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:12,textAlign:"center",lineHeight:1.8}}>
+      <div className={className} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,minWidth:0}}>
+        <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:10,textAlign:"center",lineHeight:1.8}}>
           Semifinal {semiIdx+1}<br/><span style={{color:C.redHi}}>{REGIONS[slots[0]]} vs {REGIONS[slots[1]]}</span>
         </div>
         {slots.map(s=>{
           const t=champs[s];
-          if(!t)return<div key={s} style={{color:C.dim,fontSize:12,textAlign:"center",padding:"10px 0",borderTop:`1px solid ${C.border}`,marginTop:7}}>{REGIONS[s]} champ TBD</div>;
+          if(!t)return<div key={s} style={{color:C.dim,fontSize:12,textAlign:"center",padding:"8px 0",borderTop:`1px solid ${C.border}`,marginTop:6}}>{REGIONS[s]} champ TBD</div>;
           const isp=picks.semis[semiIdx]===t,ok=isp&&ACTUAL.semis?.[semiIdx]===t,bad=isp&&ACTUAL.semis?.[semiIdx]&&ACTUAL.semis[semiIdx]!==t;
-          return<div key={s} style={{marginTop:7}}><TBtn name={t} seed={SEEDS[t]} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={0} onClick={()=>onPickSemi(semiIdx,t)}/></div>;
+          return<div key={s} style={{marginTop:6}}><TBtn name={t} seed={SEEDS[t]} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={0} readOnly={readOnly} onClick={()=>onPickSemi(semiIdx,t)}/></div>;
         })}
       </div>
     );
   }
+
   return(
     <div>
-      <h3 style={{fontSize:24,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>Final Four</h3>
-      <p style={{color:C.muted,fontSize:12,marginBottom:24}}>Pick semifinal winners, then crown your champion.</p>
-      <div style={{display:"flex",gap:14,flexWrap:"wrap",alignItems:"flex-start"}}>
-        <SemiPanel slots={[0,2]} semiIdx={0}/>
-        <div style={{background:`${C.red}0d`,border:`2px solid ${C.red}55`,borderRadius:10,padding:20,textAlign:"center",minWidth:158,flexShrink:0}}>
-          <div style={{fontSize:36,marginBottom:6}}>🏆</div>
-          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:C.redHi,marginBottom:12}}>Champion</div>
+      <h3 style={{fontSize:24,fontWeight:900,margin:"0 0 4px",fontStyle:"italic"}}>Final Four</h3>
+      <p style={{color:C.muted,fontSize:12,marginBottom:18}}>Pick semifinal winners, then crown your champion.</p>
+
+      <div className="ff-grid">
+        <SemiPanel slots={[0,2]} semiIdx={0} className="ff-semi-0"/>
+
+        {/* Champion box */}
+        <div className="ff-champ-box" style={{background:`${C.red}0d`,border:`2px solid ${C.red}55`,borderRadius:10,padding:18,textAlign:"center",minWidth:140}}>
+          <div style={{fontSize:32,marginBottom:5}}>🏆</div>
+          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:C.redHi,marginBottom:10}}>Champion</div>
           {picks.semis[0]&&picks.semis[1]
             ?[picks.semis[0],picks.semis[1]].map(t=>{
               const isp=picks.champion===t,ok=isp&&ACTUAL.champion===t,bad=isp&&ACTUAL.champion&&ACTUAL.champion!==t;
-              return<div key={t} style={{marginTop:7}}><button onClick={()=>onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 12px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.redHi:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400}}>{t} {ok&&"🏆"}{bad&&"✗"}</button></div>;
+              return(
+                <div key={t} style={{marginTop:7}}>
+                  <button onClick={()=>!readOnly&&onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 10px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.redHi:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400,cursor:readOnly?"default":"pointer"}}>
+                    {t} {ok&&"🏆"}{bad&&"✗"}
+                  </button>
+                </div>
+              );
             })
-            :<div style={{color:C.dim,fontSize:12,padding:"10px 0"}}>Pick both semis first</div>
+            :<div style={{color:C.dim,fontSize:12,padding:"8px 0",lineHeight:1.5}}>Pick both<br/>semis first</div>
           }
         </div>
-        <SemiPanel slots={[1,3]} semiIdx={1}/>
+
+        <SemiPanel slots={[1,3]} semiIdx={1} className="ff-semi-1"/>
       </div>
-      {picks.champion&&<div style={{textAlign:"center",marginTop:22,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}</div>}
+
+      {picks.champion&&(
+        <div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>
+          Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>
+          {ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}
+          {ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── LEADERBOARD ── */
-function Leaderboard({entries,me,onEdit,onRefresh}){
+function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
   const [refreshing,setRefreshing]=useState(false);
+  const locked=isBracketLocked();
   const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
   async function handleRefresh(){setRefreshing(true);await onRefresh();setRefreshing(false);}
+
   return(
     <div className="fade-in">
       <PrideBanner/>
+      <LockBanner/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
         <div>
           <h2 style={{fontSize:28,fontWeight:900,margin:0,fontStyle:"italic"}}>Leaderboard</h2>
-          <p style={{color:C.muted,fontSize:12,marginTop:3}}>2026 Tournament · Scores update live as games complete</p>
+          <p style={{color:C.muted,fontSize:12,marginTop:3}}>2026 Tournament · Tap any row to view that bracket</p>
         </div>
         <div style={{display:"flex",gap:8}}>
           <button onClick={handleRefresh} disabled={refreshing} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"7px 14px",borderRadius:4,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
             {refreshing?<span className="spin">⟳</span>:"↻"} Refresh
           </button>
-          {me&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.red}`,color:C.redHi,padding:"7px 16px",borderRadius:4,fontSize:13,fontWeight:700}}>Edit My Bracket</button>}
+          {me&&!locked&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.red}`,color:C.redHi,padding:"7px 16px",borderRadius:4,fontSize:13,fontWeight:700}}>Edit My Bracket</button>}
+          {me&&locked&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"7px 16px",borderRadius:4,fontSize:13}}>View My Bracket</button>}
         </div>
       </div>
+
       {sorted.length===0
         ?<div style={{textAlign:"center",color:C.dim,padding:"60px 20px",fontSize:15,background:C.card,borderRadius:10,border:`1px solid ${C.border}`}}>No entries yet — be the first!</div>
         :(
           <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden",marginBottom:24}}>
             <div style={{display:"flex",padding:"9px 14px",borderBottom:`1px solid ${C.border}`,fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,gap:8}}>
-              <span style={{width:38}}>#</span><span style={{flex:1}}>Bracket</span><span style={{width:56,textAlign:"right"}}>Pts</span><span style={{width:120,textAlign:"right"}}>Champion Pick</span>
+              <span style={{width:38}}>#</span>
+              <span style={{flex:1}}>Bracket</span>
+              <span style={{width:56,textAlign:"right"}}>Pts</span>
+              <span style={{width:120,textAlign:"right",display:"none"}} className="champ-col">Champion</span>
             </div>
             {sorted.map((u,i)=>{
-              const isMe=me?.id===u.id; const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
-              const champ=u.picks?.champion||"—"; const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
+              const isMe=me?.id===u.id;
+              const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
+              const champ=u.picks?.champion||"—";
+              const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
               return(
-                <div key={u.id} style={{display:"flex",alignItems:"center",padding:"13px 14px",borderBottom:`1px solid ${C.border}`,gap:8,background:isMe?C.redFaint:i%2===0?C.card:C.surface,borderLeft:`3px solid ${isMe?C.red:"transparent"}`}}>
-                  <span style={{width:38,fontSize:16}}>{medal}</span>
+                <div key={u.id}
+                  onClick={()=>onViewEntry(u)}
+                  style={{display:"flex",alignItems:"center",padding:"13px 14px",borderBottom:`1px solid ${C.border}`,gap:8,background:isMe?C.redFaint:i%2===0?C.card:C.surface,borderLeft:`3px solid ${isMe?C.red:"transparent"}`,cursor:"pointer",transition:"background 0.15s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background=isMe?`${C.red}28`:"#161b28"}
+                  onMouseLeave={e=>e.currentTarget.style.background=isMe?C.redFaint:i%2===0?C.card:C.surface}
+                >
+                  <span style={{width:38,fontSize:16,flexShrink:0}}>{medal}</span>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>{u.bracket_name}{isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}</div>
-                    <div style={{fontSize:11,color:C.dim,marginTop:1}}>{u.email}</div>
+                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      {u.bracket_name}
+                      {isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}
+                    </div>
+                    <div style={{fontSize:13,color:C.muted,marginTop:2}}>{u.email}</div>
+                    {/* Champion pick shown inline on mobile */}
+                    {u.picks?.champion&&(
+                      <div style={{fontSize:11,color:champOk?C.green:C.muted,marginTop:2}}>
+                        🏆 {champ}{champOk&&" ✓"}
+                      </div>
+                    )}
                   </div>
-                  <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.redHi:"#fff"}}>{u.score||0}</span>
-                  <span style={{width:120,textAlign:"right",fontSize:12,color:champOk?C.green:C.dim}}>{champ}{champOk&&" 🏆"}</span>
+                  <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.redHi:"#fff",flexShrink:0}}>{u.score||0}</span>
+                  <span style={{color:C.dim,fontSize:16,flexShrink:0}}>›</span>
                 </div>
               );
             })}
           </div>
         )
       }
+
       <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:18}}>
         <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:14}}>2026 Tournament Status</div>
         <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -612,7 +724,7 @@ function Leaderboard({entries,me,onEdit,onRefresh}){
 
 /* ── SCORING GUIDE ── */
 function ScoringGuide(){
-  const exampleMatchups=[
+  const examples=[
     ["R64","#12 McNeese beats #5 Vanderbilt","12−5=7, ÷2","3 pts"],
     ["R64","#16 beats #1 Florida","16−1=15, ÷2","7 pts"],
     ["R32","#7 beats #2 Houston","7−2=5, ÷2","2 pts"],
@@ -624,7 +736,6 @@ function ScoringGuide(){
       <PrideBanner/>
       <h2 style={{fontSize:28,fontWeight:900,margin:"0 0 26px",fontStyle:"italic"}}>How Scoring Works</h2>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:16,marginBottom:20}}>
-
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
           <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>🎯 Base Points Per Round</h3>
           {[["Round of 64","1pt"],["Round of 32","1pt"],["Sweet 16","2pts"],["Elite Eight","3pts"],["Final Four","5pts"],["Championship","8pts"]].map(([r,p])=>(
@@ -632,21 +743,19 @@ function ScoringGuide(){
               <span style={{color:C.muted}}>{r}</span><span style={{color:"#fff",fontWeight:700}}>{p}</span>
             </div>
           ))}
-          <p style={{color:C.dim,fontSize:11,marginTop:10,lineHeight:1.6}}>Your champion pick is worth 8× your first-round picks. Late-round picks matter most.</p>
+          <p style={{color:C.dim,fontSize:11,marginTop:10,lineHeight:1.6}}>Your champion pick is worth 8× a first-round pick. Late-round picks matter most.</p>
         </div>
-
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
           <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>🚀 Upset Bonus — All Rounds</h3>
-          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:10}}>Correctly pick a higher seed to win <strong style={{color:"#fff"}}>in any round</strong> and earn a bonus:</p>
+          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:10}}>Correctly pick a higher seed to win <strong style={{color:"#fff"}}>in any round</strong>:</p>
           <div style={{background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"10px 12px",fontSize:13,color:"#7bc3ff",fontFamily:"monospace",marginBottom:14,lineHeight:1.8}}>
             Bonus = floor( (winner seed − loser seed) ÷ 2 )
           </div>
-          <p style={{color:C.dim,fontSize:11,lineHeight:1.6}}>Bigger seed difference = bigger bonus. Applies whenever the higher-numbered seed wins.</p>
+          <p style={{color:C.dim,fontSize:11,lineHeight:1.6}}>Bigger seed gap = bigger bonus. Applies whenever the higher-numbered seed wins, in every round.</p>
         </div>
-
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
-          <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>📊 Upset Bonus Examples</h3>
-          {exampleMatchups.map(([rnd,matchup,calc,pts])=>(
+          <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>📊 Bonus Examples</h3>
+          {examples.map(([rnd,matchup,calc,pts])=>(
             <div key={matchup} style={{padding:"7px 0",borderBottom:`1px solid ${C.border}`,fontSize:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{color:C.muted,flex:1}}>{matchup}</span>
@@ -657,11 +766,16 @@ function ScoringGuide(){
           ))}
         </div>
       </div>
-
+      <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:10,padding:22,marginBottom:16}}>
+        <h3 style={{fontSize:14,fontWeight:700,color:"#b8860b",marginBottom:10}}>🔒 Bracket Lock</h3>
+        <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>
+          All brackets lock at <strong style={{color:"#fff"}}>11:00 AM CST on Thursday, March 19</strong> — right before the first game tips off. No new entries or edits after that point. Make sure your picks are in before then!
+        </p>
+      </div>
       <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:10,padding:22}}>
         <h3 style={{fontSize:14,fontWeight:700,color:"#7bc3ff",marginBottom:10}}>📡 Live Score Updates via ESPN</h3>
         <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>
-          ZikaMadness polls ESPN's public scoreboard API every <strong style={{color:"#fff"}}>60 seconds</strong>. Scores update automatically as games complete. The ESPN status indicator in the top bar shows live connection and number of games in progress. <strong style={{color:"#fff"}}>First round: March 19–20. Final Four: April 4. Championship: April 6, Indianapolis.</strong>
+          ZikaMadness polls ESPN every <strong style={{color:"#fff"}}>60 seconds</strong>. Scores update automatically as games complete. <strong style={{color:"#fff"}}>First round: March 19–20. Final Four: April 4. Championship: April 6, Indianapolis.</strong>
         </p>
       </div>
     </div>
