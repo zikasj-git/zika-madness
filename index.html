@@ -179,17 +179,19 @@ const BRACKET = {
    UPDATE results SET data = '<json>' WHERE id = 1;
    See bottom of this file for the full JSON format reference.
 ── */
-let ACTUAL = {
-  South:{r64:[],r32:[],s16:[],e8:[]}, East:{r64:[],r32:[],s16:[],e8:[]},
-  West:{r64:[],r32:[],s16:[],e8:[]}, Midwest:{r64:[],r32:[],s16:[],e8:[]},
+const ACTUAL_EMPTY = {
+  South:{r64:[null,null,null,null,null,null,null,null],r32:[],s16:[],e8:[]},
+  East:{r64:[null,null,null,null,null,null,null,null],r32:[],s16:[],e8:[]},
+  West:{r64:[null,null,null,null,null,null,null,null],r32:[],s16:[],e8:[]},
+  Midwest:{r64:[null,null,null,null,null,null,null,null],r32:[],s16:[],e8:[]},
   finalFour:[],semis:[],champion:null,
 };
-async function fetchActual(){
+async function loadActual(){
   try{
     const {data,error}=await sb.from("results").select("data").eq("id",1).single();
-    if(!error&&data?.data) ACTUAL=data.data;
+    if(!error&&data?.data) return data.data;
   }catch(e){ console.log("results fetch:",e); }
-  return ACTUAL;
+  return JSON.parse(JSON.stringify(ACTUAL_EMPTY));
 }
 
 const SEEDS={};
@@ -281,19 +283,21 @@ function App(){
   const [liveCount,setLiveCount]=useState(0);
   const [appLoading,setAppLoading]=useState(true);
   const [unreadChat,setUnreadChat]=useState(false);
+  const [actual,setActual]=useState(ACTUAL_EMPTY);
 
   useEffect(()=>{
     async function init(){
       const savedEmail=localStorage.getItem("zm_email");
-      await fetchActual(); // load live results first
+      const a=await loadActual();
+      setActual(a);
       const all=await dbGetEntries();
       setEntries(all);
       if(savedEmail){const row=all.find(e=>e.email===savedEmail);if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");}}
       setAppLoading(false);
     }
     init();
-    // Re-fetch results every 60s so leaderboard stays current
-    const rv=setInterval(async()=>{ await fetchActual(); },60000);
+    // Re-fetch results every 60s — updates React state so leaderboard re-renders
+    const rv=setInterval(async()=>{ const a=await loadActual(); setActual(a); },60000);
     return()=>clearInterval(rv);
   },[]);
 
@@ -313,7 +317,7 @@ function App(){
   },[view]);
 
   function notify(msg,type="ok"){setNotif({msg,type});setTimeout(()=>setNotif(null),3400);}
-  async function refreshEntries(){const all=await dbGetEntries();setEntries(all);if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);}}
+  async function refreshEntries(){const a=await loadActual();setActual(a);const all=await dbGetEntries();setEntries(all);if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);}}
 
   function handleViewEntry(entry){setViewingEntry(entry);setView("view-bracket");}
 
@@ -330,7 +334,7 @@ function App(){
 
   async function handleSavePicks(picks){
     if(isBracketLocked()){notify("Brackets are locked — no edits allowed.","err");return;}
-    const score=calcScore(picks,ACTUAL);
+    const score=calcScore(picks,actual);
     const saved=await dbUpsertEntry({...me,picks,score});
     if(!saved){notify("Error saving — please try again.","err");return;}
     setMe(saved);await refreshEntries();notify("Bracket saved! 🏀");setView("leaderboard");
@@ -356,9 +360,9 @@ function App(){
       <main style={{maxWidth:1100,margin:"0 auto",padding:"22px 14px 90px"}}>
         {view==="landing"      &&<Landing onStart={()=>setView("register")}/>}
         {view==="register"     &&<Register entries={entries} onRegister={handleRegister}/>}
-        {view==="bracket"      &&me&&<BracketView user={me} onSave={handleSavePicks} readOnly={false}/>}
-        {view==="view-bracket" &&viewingEntry&&<BracketView user={viewingEntry} onSave={null} readOnly={true} onBack={()=>setView("leaderboard")}/>}
-        {view==="leaderboard"  &&<Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries} onViewEntry={handleViewEntry}/>}
+        {view==="bracket"      &&me&&<BracketView user={me} onSave={handleSavePicks} readOnly={false} actual={actual}/>}
+        {view==="view-bracket" &&viewingEntry&&<BracketView user={viewingEntry} onSave={null} readOnly={true} onBack={()=>setView("leaderboard")} actual={actual}/>}
+        {view==="leaderboard"  &&<Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries} onViewEntry={handleViewEntry} actual={actual}/>}
         {view==="locker"       &&<LockerRoom me={me}/>}
         {view==="scoring"      &&<ScoringGuide/>}
         {!me&&!["landing","register","scoring","locker"].includes(view)&&(
@@ -705,7 +709,7 @@ function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick,readOnly}){
 }
 
 /* ── BRACKET VIEW ── */
-function BracketView({user,onSave,readOnly,onBack}){
+function BracketView({user,onSave,readOnly,onBack,actual}){
   const [picks,setPicks]=useState(()=>user.picks?JSON.parse(JSON.stringify(user.picks)):emptyPicks());
   const [tab,setTab]=useState("South");const [saving,setSaving]=useState(false);
   const locked=isBracketLocked();
@@ -745,13 +749,13 @@ function BracketView({user,onSave,readOnly,onBack}){
         {REGIONS.map(r=><button key={r} style={tSt(r)} onClick={()=>setTab(r)}>{r}</button>)}
         <button style={tSt("Final")} onClick={()=>setTab("Final")}>🏆 Final Four</button>
       </div>
-      {tab!=="Final"?<RegionBracket region={tab} picks={picks} onPick={pick} readOnly={effectiveReadOnly}/>:<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp} readOnly={effectiveReadOnly}/>}
+      {tab!=="Final"?<RegionBracket region={tab} picks={picks} onPick={pick} readOnly={effectiveReadOnly} actual={actual}/>:<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp} readOnly={effectiveReadOnly} actual={actual}/>}
     </div>
   );
 }
 
 /* ── REGION BRACKET ── */
-function RegionBracket({region,picks,onPick,readOnly}){
+function RegionBracket({region,picks,onPick,readOnly,actual}){
   const teams=BRACKET[region];
   const rounds=["r64","r32","s16","e8"];
   const labels=["Round of 64","Round of 32","Sweet 16","Elite Eight"];
@@ -771,9 +775,9 @@ function RegionBracket({region,picks,onPick,readOnly}){
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {Array.from({length:nG}).map((_,gi)=>{
-                const opts=getOpts(ri,gi);const picked=picks[region][rk][gi];const actualW=ACTUAL[region]?.[rk]?.[gi];
+                const opts=getOpts(ri,gi);const picked=picks[region][rk][gi];const actualW=actual[region]?.[rk]?.[gi];
                 let bonus=0;
-                if(actualW&&picked===actualW){const[s1,s2]=getMatchupSeeds(region,rk,gi,ACTUAL);const ws=SEEDS[actualW];const ls=(s1===ws)?s2:s1;bonus=upsetBonus(ws,ls);}
+                if(actualW&&picked===actualW){const[s1,s2]=getMatchupSeeds(region,rk,gi,actual);const ws=SEEDS[actualW];const ls=(s1===ws)?s2:s1;bonus=upsetBonus(ws,ls);}
                 return(
                   <div key={gi} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:6,padding:5,display:"flex",flexDirection:"column",gap:3}}>
                     {opts.length<2&&ri>0&&<div style={{color:C.dim,fontSize:10,textAlign:"center",padding:"7px 0"}}>← pick previous rounds</div>}
@@ -795,7 +799,7 @@ function RegionBracket({region,picks,onPick,readOnly}){
 }
 
 /* ── FINAL FOUR ── */
-function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
+function FinalFour({picks,onPickSemi,onPickChamp,readOnly,actual}){
   const champs=REGIONS.map(r=>picks[r].e8[0]);
   function SemiPanel({slots,semiIdx,className}){
     return(
@@ -806,7 +810,7 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
         {slots.map(s=>{
           const t=champs[s];
           if(!t)return<div key={s} style={{color:C.dim,fontSize:12,textAlign:"center",padding:"8px 0",borderTop:`1px solid ${C.border}`,marginTop:6}}>{REGIONS[s]} champ TBD</div>;
-          const isp=picks.semis[semiIdx]===t,ok=isp&&ACTUAL.semis?.[semiIdx]===t,bad=isp&&ACTUAL.semis?.[semiIdx]&&ACTUAL.semis[semiIdx]!==t;
+          const isp=picks.semis[semiIdx]===t,ok=isp&&actual.semis?.[semiIdx]===t,bad=isp&&actual.semis?.[semiIdx]&&actual.semis[semiIdx]!==t;
           return<div key={s} style={{marginTop:6}}><TBtn name={t} seed={SEEDS[t]} isPicked={isp} isCorrect={ok} isWrong={bad} bonus={0} readOnly={readOnly} onClick={()=>onPickSemi(semiIdx,t)}/></div>;
         })}
       </div>
@@ -824,7 +828,7 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
           <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:C.redHi,marginBottom:10}}>Champion</div>
           {picks.semis[0]&&picks.semis[1]
             ?[picks.semis[0],picks.semis[1]].map(t=>{
-              const isp=picks.champion===t,ok=isp&&ACTUAL.champion===t,bad=isp&&ACTUAL.champion&&ACTUAL.champion!==t;
+              const isp=picks.champion===t,ok=isp&&actual.champion===t,bad=isp&&actual.champion&&actual.champion!==t;
               return<div key={t} style={{marginTop:7}}><button onClick={()=>!readOnly&&onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 10px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.redHi:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400,cursor:readOnly?"default":"pointer"}}>{t} {ok&&"🏆"}{bad&&"✗"}</button></div>;
             })
             :<div style={{color:C.dim,fontSize:12,padding:"8px 0",lineHeight:1.5}}>Pick both<br/>semis first</div>
@@ -833,13 +837,13 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
         {/* Semifinal 2: West (index 2) vs Midwest (index 3) */}
         <SemiPanel slots={[2,3]} semiIdx={1} className="ff-semi-1"/>
       </div>
-      {picks.champion&&<div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}</div>}
+      {picks.champion&&<div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{actual.champion&&picks.champion===actual.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{actual.champion&&picks.champion!==actual.champion&&<span style={{color:C.redHi}}> ✗</span>}</div>}
     </div>
   );
 }
 
 /* ── LEADERBOARD ── */
-function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
+function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry,actual}){
   const [refreshing,setRefreshing]=useState(false);
   const locked=isBracketLocked();
   const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
@@ -868,7 +872,7 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
             </div>
             {sorted.map((u,i)=>{
               const isMe=me?.id===u.id;const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
-              const champ=u.picks?.champion||"—";const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
+              const champ=u.picks?.champion||"—";const champOk=u.picks?.champion&&u.picks.champion===actual.champion;
               return(
                 <div key={u.id} onClick={()=>onViewEntry(u)}
                   style={{display:"flex",alignItems:"center",padding:"13px 14px",borderBottom:`1px solid ${C.border}`,gap:8,background:isMe?C.redFaint:i%2===0?C.card:C.surface,borderLeft:`3px solid ${isMe?C.red:"transparent"}`,cursor:"pointer",transition:"background 0.15s"}}
@@ -880,7 +884,7 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
                     <div style={{fontSize:13,color:C.muted,marginTop:2}}>{u.email}</div>
                     {u.picks?.champion&&<div style={{fontSize:11,color:champOk?C.green:C.muted,marginTop:2}}>🏆 {champ}{champOk&&" ✓"}</div>}
                   </div>
-                  <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.redHi:"#fff",flexShrink:0}}>{u.score||0}</span>
+                  <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.redHi:"#fff",flexShrink:0}}>{u.picks?calcScore(u.picks,actual):0}</span>
                   <span style={{color:C.dim,fontSize:16,flexShrink:0}}>›</span>
                 </div>
               );
@@ -897,7 +901,7 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
             </div>
           ))}
           <div style={{flex:"1 1 130px",background:C.bg,border:`1px solid ${C.red}66`,borderRadius:6,padding:"10px 13px",fontSize:12,lineHeight:1.9}}>
-            <strong style={{color:C.redHi}}>🏆 Champion</strong><br/><span style={{color:ACTUAL.champion?"#fff":C.dim,fontWeight:ACTUAL.champion?700:400}}>{ACTUAL.champion||"TBD"}</span>
+            <strong style={{color:C.redHi}}>🏆 Champion</strong><br/><span style={{color:actual.champion?"#fff":C.dim,fontWeight:actual.champion?700:400}}>{actual.champion||"TBD"}</span>
           </div>
         </div>
       </div>
