@@ -600,33 +600,88 @@ function Landing({onStart}){
 
 /* ── REGISTER ── */
 function Register({entries,onRegister}){
-  const [email,setEmail]=useState("");const [name,setName]=useState("");const [mode,setMode]=useState("new");const [saving,setSaving]=useState(false);
   const locked=isBracketLocked();
+  // When locked, force returning mode — new entries not allowed
+  const [email,setEmail]=useState("");
+  const [name,setName]=useState("");
+  const [mode,setMode]=useState(locked?"returning":"new");
+  const [saving,setSaving]=useState(false);
   const found=entries.find(e=>e.email===email.toLowerCase());
-  async function submit(){if(locked&&mode==="new")return;if(!email.trim())return;if(mode==="new"&&!name.trim())return;setSaving(true);await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim());setSaving(false);}
-  const tabSt=m=>({flex:1,padding:"10px 0",border:"none",background:mode===m?C.red:"transparent",color:mode===m?"#fff":C.muted,fontWeight:mode===m?700:400,fontSize:14});
+
+  async function submit(){
+    if(!email.trim())return;
+    if(mode==="new"&&!name.trim())return;
+    if(mode==="new"&&locked)return;
+    setSaving(true);
+    await onRegister(email.trim(), mode==="returning"&&found ? found.bracket_name : name.trim());
+    setSaving(false);
+  }
+
+  const tabSt=m=>({
+    flex:1,padding:"10px 0",border:"none",
+    background:mode===m?C.red:"transparent",
+    color:mode===m?"#fff":locked&&m==="new"?C.dim:C.muted,
+    fontWeight:mode===m?700:400,fontSize:14,
+    cursor:locked&&m==="new"?"not-allowed":"pointer",
+  });
   const inp={width:"100%",background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"11px 13px",color:C.text,fontSize:15,marginBottom:16};
+  const canSubmit=email.trim()&&!saving&&(mode==="returning"||(mode==="new"&&name.trim()&&!locked));
+
   return(
     <div style={{maxWidth:460,margin:"0 auto",padding:"32px 0"}}>
       <PrideBanner/>
-      {locked&&<div className="lock-banner">🔒 <strong>Brackets are locked.</strong> New entries are no longer accepted.</div>}
-      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28,opacity:locked?0.6:1}}>
-        <h2 style={{fontSize:26,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>Join the Pool</h2>
-        <p style={{color:C.muted,fontSize:13,marginBottom:22}}>One bracket entry per email. No exceptions.</p>
-        <div style={{display:"flex",border:`1px solid ${C.border}`,borderRadius:6,overflow:"hidden",marginBottom:22}}>
-          <button style={tabSt("new")} onClick={()=>!locked&&setMode("new")} disabled={locked}>New Entry</button>
-          <button style={tabSt("returning")} onClick={()=>setMode("returning")}>Returning Player</button>
+      {locked&&(
+        <div className="lock-banner">
+          🔒 <strong>Brackets are locked — tournament is underway.</strong><br/>
+          Returning players: enter your email below to sign back in and view your bracket.
         </div>
+      )}
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28}}>
+        <h2 style={{fontSize:26,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>
+          {locked?"Sign Back In":"Join the Pool"}
+        </h2>
+        <p style={{color:C.muted,fontSize:13,marginBottom:22}}>
+          {locked?"Enter your email to access your bracket and the leaderboard.":"One bracket entry per email. No exceptions."}
+        </p>
+
+        {/* Only show tabs when not locked */}
+        {!locked&&(
+          <div style={{display:"flex",border:`1px solid ${C.border}`,borderRadius:6,overflow:"hidden",marginBottom:22}}>
+            <button style={tabSt("new")} onClick={()=>setMode("new")}>New Entry</button>
+            <button style={tabSt("returning")} onClick={()=>setMode("returning")}>Returning Player</button>
+          </div>
+        )}
+
         <label style={{display:"block",fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Email Address</label>
-        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" style={inp} disabled={locked} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+        <input
+          type="email"
+          value={email}
+          onChange={e=>setEmail(e.target.value)}
+          placeholder="your@email.com"
+          style={inp}
+          autoFocus
+          onKeyDown={e=>e.key==="Enter"&&submit()}
+        />
+
         {mode==="new"&&!locked&&<>
           <label style={{display:"block",fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Bracket Name</label>
           <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Uncle Dave's Dark Horses" maxLength={40} style={inp} onKeyDown={e=>e.key==="Enter"&&submit()}/>
         </>}
-        {mode==="returning"&&found&&<div style={{background:C.greenDim,border:`1px solid ${C.green}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.green,marginBottom:16}}>✓ Found: <strong>{found.bracket_name}</strong></div>}
-        {mode==="returning"&&email.length>4&&!found&&<div style={{background:C.redFaint,border:`1px solid ${C.red}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.redHi,marginBottom:16}}>No entry found — try "New Entry".</div>}
-        <button onClick={submit} disabled={saving||(locked&&mode==="new")} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving&&!(locked&&mode==="new")?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":(locked&&mode==="new")?"Brackets Locked 🔒":mode==="new"?"Create My Bracket →":"Sign Back In →"}
+
+        {mode==="returning"&&found&&(
+          <div style={{background:C.greenDim,border:`1px solid ${C.green}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.green,marginBottom:16}}>
+            ✓ Found: <strong>{found.bracket_name}</strong>
+          </div>
+        )}
+        {mode==="returning"&&email.length>4&&!found&&(
+          <div style={{background:C.redFaint,border:`1px solid ${C.red}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.redHi,marginBottom:16}}>
+            No entry found for that email.
+          </div>
+        )}
+
+        <button onClick={submit} disabled={!canSubmit} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:canSubmit?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {saving&&<span className="spin">⟳</span>}
+          {saving?"Signing in…":locked?"Sign Back In →":mode==="new"?"Create My Bracket →":"Sign Back In →"}
         </button>
       </div>
     </div>
