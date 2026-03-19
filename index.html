@@ -272,7 +272,7 @@ function App(){
 
   useEffect(()=>{
     async function init(){
-      const savedEmail=sessionStorage.getItem("zm_email");
+      const savedEmail=localStorage.getItem("zm_email");
       const all=await dbGetEntries();
       setEntries(all);
       if(savedEmail){const row=all.find(e=>e.email===savedEmail);if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");}}
@@ -304,10 +304,10 @@ function App(){
   async function handleRegister(email,bracketName){
     if(isBracketLocked()){notify("Brackets are locked — the tournament has started.","err");return;}
     const existing=await dbGetByEmail(email);
-    if(existing){setMe(existing);sessionStorage.setItem("zm_email",existing.email);await refreshEntries();setView(existing.picks?"leaderboard":"bracket");notify(`Welcome back, ${existing.bracket_name}!`);return;}
+    if(existing){setMe(existing);localStorage.setItem("zm_email",existing.email);await refreshEntries();setView(existing.picks?"leaderboard":"bracket");notify(`Welcome back, ${existing.bracket_name}!`);return;}
     const saved=await dbUpsertEntry({email:email.toLowerCase(),bracket_name:bracketName,picks:null,score:0});
     if(!saved){notify("Error — please try again.","err");return;}
-    setMe(saved);sessionStorage.setItem("zm_email",saved.email);await refreshEntries();setView("bracket");
+    setMe(saved);localStorage.setItem("zm_email",saved.email);await refreshEntries();setView("bracket");
     notify(`Welcome, ${bracketName}! Fill out your bracket.`);
   }
 
@@ -319,7 +319,7 @@ function App(){
     setMe(saved);await refreshEntries();notify("Bracket saved! 🏀");setView("leaderboard");
   }
 
-  function handleLogout(){setMe(null);sessionStorage.removeItem("zm_email");setView("landing");}
+  function handleLogout(){setMe(null);localStorage.removeItem("zm_email");setView("landing");}
 
   function goToLocker(){setUnreadChat(false);setView("locker");}
 
