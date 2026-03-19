@@ -745,7 +745,8 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
       <h3 style={{fontSize:24,fontWeight:900,margin:"0 0 4px",fontStyle:"italic"}}>Final Four</h3>
       <p style={{color:C.muted,fontSize:12,marginBottom:18}}>Pick semifinal winners, then crown your champion.</p>
       <div className="ff-grid">
-        <SemiPanel slots={[0,2]} semiIdx={0} className="ff-semi-0"/>
+        {/* Semifinal 1: East (index 1) vs South (index 0) */}
+        <SemiPanel slots={[1,0]} semiIdx={0} className="ff-semi-0"/>
         <div className="ff-champ-box" style={{background:`${C.red}0d`,border:`2px solid ${C.red}55`,borderRadius:10,padding:18,textAlign:"center",minWidth:140}}>
           <div style={{fontSize:32,marginBottom:5}}>🏆</div>
           <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:C.redHi,marginBottom:10}}>Champion</div>
@@ -757,7 +758,8 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
             :<div style={{color:C.dim,fontSize:12,padding:"8px 0",lineHeight:1.5}}>Pick both<br/>semis first</div>
           }
         </div>
-        <SemiPanel slots={[1,3]} semiIdx={1} className="ff-semi-1"/>
+        {/* Semifinal 2: West (index 2) vs Midwest (index 3) */}
+        <SemiPanel slots={[2,3]} semiIdx={1} className="ff-semi-1"/>
       </div>
       {picks.champion&&<div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}</div>}
     </div>
