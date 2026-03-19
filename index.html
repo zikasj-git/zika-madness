@@ -846,7 +846,7 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly,actual}){
 function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry,actual}){
   const [refreshing,setRefreshing]=useState(false);
   const locked=isBracketLocked();
-  const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
+  const sorted=[...entries].sort((a,b)=>(b.picks?calcScore(b.picks,actual):0)-(a.picks?calcScore(a.picks,actual):0));
   async function handleRefresh(){setRefreshing(true);await fetchActual();await onRefresh();setRefreshing(false);}
   return(
     <div className="fade-in">
