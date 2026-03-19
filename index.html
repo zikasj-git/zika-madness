@@ -12,8 +12,8 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080b10; color: #e2e4ec; font-family: Georgia, 'Times New Roman', serif; -webkit-tap-highlight-color: transparent; }
   button { cursor: pointer; font-family: inherit; }
-  input  { font-family: inherit; color: #e2e4ec; }
-  input:focus { outline: 2px solid #9b0e22; border-color: transparent !important; }
+  input, textarea { font-family: inherit; color: #e2e4ec; }
+  input:focus, textarea:focus { outline: 2px solid #9b0e22; border-color: transparent !important; }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: #0c0f16; }
   ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
@@ -23,80 +23,95 @@
   @keyframes slideIn { from { transform:translateX(70px); opacity:0; } to { transform:translateX(0); opacity:1; } }
   @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes msgPop { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   .cta-btn  { animation: pulse-red 2.2s infinite; }
   .notif    { animation: slideIn 0.28s ease; }
   .spin     { animation: spin 0.9s linear infinite; display:inline-block; }
   .fade-in  { animation: fadeIn 0.3s ease; }
+  .msg-pop  { animation: msgPop 0.25s ease; }
   .live-dot { width:7px;height:7px;border-radius:50%;background:#9b0e22;display:inline-block;margin-right:5px;animation:pulse-dot 1.3s infinite; }
   .pride-box { background:linear-gradient(135deg,#0a1520 0%,#160610 100%); border:1px solid #9b0e2255; border-left:4px solid #9b0e22; border-radius:8px; padding:14px 18px; margin-bottom:26px; font-size:13px; color:#9aa0b0; line-height:1.75; }
   .pride-box strong { color:#e2e4ec; }
+  .ff-grid { display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:start; }
+  @media (max-width:600px) { .ff-grid { grid-template-columns:1fr; } .ff-champ-box { order:3; } .ff-semi-0 { order:1; } .ff-semi-1 { order:2; } }
+  .lock-banner { background:linear-gradient(135deg,#1a1200 0%,#0f0a00 100%); border:1px solid #b8860b88; border-left:4px solid #b8860b; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#c8a830; line-height:1.6; }
+  .view-only-banner { background:linear-gradient(135deg,#0a1520 0%,#060d18 100%); border:1px solid #2563a855; border-left:4px solid #2563a8; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#7bc3ff; line-height:1.6; }
 
-  /* ── FINAL FOUR MOBILE LAYOUT ── */
-  .ff-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 12px;
-    align-items: start;
+  /* ── LOCKER ROOM ── */
+  .chat-bubble {
+    max-width: 82%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
   }
-  @media (max-width: 600px) {
-    .ff-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto auto;
-    }
-    .ff-champ-box { order: 3; }
-    .ff-semi-0   { order: 1; }
-    .ff-semi-1   { order: 2; }
+  .chat-bubble.mine {
+    background: #9b0e2228;
+    border: 1px solid #9b0e2255;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
   }
-
-  /* ── LOCK BANNER ── */
-  .lock-banner {
-    background: linear-gradient(135deg, #1a1200 0%, #0f0a00 100%);
-    border: 1px solid #b8860b88;
-    border-left: 4px solid #b8860b;
+  .chat-bubble.theirs {
+    background: #0f1a2e;
+    border: 1px solid #1e3a5f55;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #0c0f16;
+    border-top: 1px solid #191e2c;
+    position: sticky;
+    bottom: 0;
+  }
+  .chat-input-row textarea {
+    flex: 1;
+    background: #080b10;
+    border: 1px solid #1e3a5f;
     border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #c8a830;
-    line-height: 1.6;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #e2e4ec;
+    resize: none;
+    min-height: 42px;
+    max-height: 120px;
   }
-
-  /* ── VIEW-ONLY BRACKET ── */
-  .view-only-banner {
-    background: linear-gradient(135deg, #0a1520 0%, #060d18 100%);
-    border: 1px solid #2563a855;
-    border-left: 4px solid #2563a8;
+  .chat-send-btn {
+    background: #9b0e22;
+    color: #fff;
+    border: none;
     border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #7bc3ff;
-    line-height: 1.6;
+    padding: 0 18px;
+    font-size: 18px;
+    font-weight: 900;
+    align-self: flex-end;
+    height: 42px;
+    flex-shrink: 0;
   }
+  .chat-send-btn:disabled { opacity: 0.4; cursor: default; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 /* ── SUPABASE ── */
 const SUPA_URL = "https://mmjgjifdnbjugzxxkauk.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tamdqaWZkbmJqdWd6eHhrYXVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY1NTEsImV4cCI6MjA4ODczMjU1MX0.nIBgAhRvg3uXdFvjs0nECY1kAvrC18L_qmwnArNHDEE";
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-/* ── BRACKET LOCK ──
-   Locks at 11:00 AM CST on Thursday March 19, 2026.
-   CST = UTC-6, so 11:00 AM CST = 17:00 UTC.
-── */
+/* ── LOCK ── */
 const LOCK_TIME = new Date("2026-03-19T17:00:00Z");
 function isBracketLocked() { return new Date() >= LOCK_TIME; }
 function lockCountdown() {
   const diff = LOCK_TIME - new Date();
   if (diff <= 0) return null;
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  if (h > 48) { const d = Math.floor(h/24); return `${d} day${d!==1?"s":""}`; }
+  const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
+  if (h > 48) { const d=Math.floor(h/24); return `${d} day${d!==1?"s":""}`; }
   if (h > 0) return `${h}h ${m}m`;
   return `${m} minute${m!==1?"s":""}`;
 }
@@ -113,89 +128,78 @@ const C = {
 /* ── SCORING ── */
 const ROUND_PTS = [1,1,2,3,5,8];
 const REGIONS   = ["South","East","West","Midwest"];
-
-function upsetBonus(winnerSeed, loserSeed) {
-  if (!winnerSeed || !loserSeed || winnerSeed <= loserSeed) return 0;
-  return Math.floor((winnerSeed - loserSeed) / 2);
-}
+function upsetBonus(ws,ls){ if(!ws||!ls||ws<=ls)return 0; return Math.floor((ws-ls)/2); }
 
 /* ── 2026 BRACKET ── */
 const BRACKET = {
-  South: [
-    {seed:1, name:"Florida"},        {seed:16,name:"Prairie View/Lehigh"},
-    {seed:8, name:"Clemson"},         {seed:9, name:"Iowa"},
-    {seed:5, name:"Vanderbilt"},      {seed:12,name:"McNeese"},
-    {seed:4, name:"Nebraska"},        {seed:13,name:"Troy"},
-    {seed:6, name:"North Carolina"},  {seed:11,name:"VCU"},
-    {seed:3, name:"Illinois"},        {seed:14,name:"Penn"},
-    {seed:7, name:"Saint Mary's"},    {seed:10,name:"Texas A&M"},
-    {seed:2, name:"Houston"},         {seed:15,name:"Idaho"},
+  South:[
+    {seed:1,name:"Florida"},{seed:16,name:"Prairie View/Lehigh"},
+    {seed:8,name:"Clemson"},{seed:9,name:"Iowa"},
+    {seed:5,name:"Vanderbilt"},{seed:12,name:"McNeese"},
+    {seed:4,name:"Nebraska"},{seed:13,name:"Troy"},
+    {seed:6,name:"North Carolina"},{seed:11,name:"VCU"},
+    {seed:3,name:"Illinois"},{seed:14,name:"Penn"},
+    {seed:7,name:"Saint Mary's"},{seed:10,name:"Texas A&M"},
+    {seed:2,name:"Houston"},{seed:15,name:"Idaho"},
   ],
-  East: [
-    {seed:1, name:"Duke"},            {seed:16,name:"Siena"},
-    {seed:8, name:"Ohio State"},      {seed:9, name:"TCU"},
-    {seed:5, name:"St. John's"},      {seed:12,name:"Northern Iowa"},
-    {seed:4, name:"Kansas"},          {seed:13,name:"Cal Baptist"},
-    {seed:6, name:"Louisville"},      {seed:11,name:"South Florida"},
-    {seed:3, name:"Michigan State"},  {seed:14,name:"North Dakota State"},
-    {seed:7, name:"UCLA"},            {seed:10,name:"UCF"},
-    {seed:2, name:"UConn"},           {seed:15,name:"Furman"},
+  East:[
+    {seed:1,name:"Duke"},{seed:16,name:"Siena"},
+    {seed:8,name:"Ohio State"},{seed:9,name:"TCU"},
+    {seed:5,name:"St. John's"},{seed:12,name:"Northern Iowa"},
+    {seed:4,name:"Kansas"},{seed:13,name:"Cal Baptist"},
+    {seed:6,name:"Louisville"},{seed:11,name:"South Florida"},
+    {seed:3,name:"Michigan State"},{seed:14,name:"North Dakota State"},
+    {seed:7,name:"UCLA"},{seed:10,name:"UCF"},
+    {seed:2,name:"UConn"},{seed:15,name:"Furman"},
   ],
-  West: [
-    {seed:1, name:"Arizona"},         {seed:16,name:"LIU"},
-    {seed:8, name:"Villanova"},       {seed:9, name:"Utah State"},
-    {seed:5, name:"Wisconsin"},       {seed:12,name:"High Point"},
-    {seed:4, name:"Arkansas"},        {seed:13,name:"Hawaii"},
-    {seed:6, name:"BYU"},             {seed:11,name:"Texas/NC State"},
-    {seed:3, name:"Gonzaga"},         {seed:14,name:"Kennesaw State"},
-    {seed:7, name:"Miami (FL)"},      {seed:10,name:"Missouri"},
-    {seed:2, name:"Purdue"},          {seed:15,name:"Queens"},
+  West:[
+    {seed:1,name:"Arizona"},{seed:16,name:"LIU"},
+    {seed:8,name:"Villanova"},{seed:9,name:"Utah State"},
+    {seed:5,name:"Wisconsin"},{seed:12,name:"High Point"},
+    {seed:4,name:"Arkansas"},{seed:13,name:"Hawaii"},
+    {seed:6,name:"BYU"},{seed:11,name:"Texas/NC State"},
+    {seed:3,name:"Gonzaga"},{seed:14,name:"Kennesaw State"},
+    {seed:7,name:"Miami (FL)"},{seed:10,name:"Missouri"},
+    {seed:2,name:"Purdue"},{seed:15,name:"Queens"},
   ],
-  Midwest: [
-    {seed:1, name:"Michigan"},        {seed:16,name:"UMBC/Howard"},
-    {seed:8, name:"Georgia"},         {seed:9, name:"Saint Louis"},
-    {seed:5, name:"Texas Tech"},      {seed:12,name:"Akron"},
-    {seed:4, name:"Alabama"},         {seed:13,name:"Hofstra"},
-    {seed:6, name:"Tennessee"},       {seed:11,name:"SMU/Miami (OH)"},
-    {seed:3, name:"Virginia"},        {seed:14,name:"Wright State"},
-    {seed:7, name:"Kentucky"},        {seed:10,name:"Santa Clara"},
-    {seed:2, name:"Iowa State"},      {seed:15,name:"Tennessee State"},
+  Midwest:[
+    {seed:1,name:"Michigan"},{seed:16,name:"UMBC/Howard"},
+    {seed:8,name:"Georgia"},{seed:9,name:"Saint Louis"},
+    {seed:5,name:"Texas Tech"},{seed:12,name:"Akron"},
+    {seed:4,name:"Alabama"},{seed:13,name:"Hofstra"},
+    {seed:6,name:"Tennessee"},{seed:11,name:"SMU/Miami (OH)"},
+    {seed:3,name:"Virginia"},{seed:14,name:"Wright State"},
+    {seed:7,name:"Kentucky"},{seed:10,name:"Santa Clara"},
+    {seed:2,name:"Iowa State"},{seed:15,name:"Tennessee State"},
   ],
 };
 
 const ACTUAL = {
-  South:   {r64:[],r32:[],s16:[],e8:[]},
-  East:    {r64:[],r32:[],s16:[],e8:[]},
-  West:    {r64:[],r32:[],s16:[],e8:[]},
-  Midwest: {r64:[],r32:[],s16:[],e8:[]},
-  finalFour: [], semis: [], champion: null,
+  South:{r64:[],r32:[],s16:[],e8:[]}, East:{r64:[],r32:[],s16:[],e8:[]},
+  West:{r64:[],r32:[],s16:[],e8:[]}, Midwest:{r64:[],r32:[],s16:[],e8:[]},
+  finalFour:[],semis:[],champion:null,
 };
 
 const SEEDS={};
 REGIONS.forEach(r=>BRACKET[r].forEach(t=>{SEEDS[t.name]=t.seed;}));
 
-function getMatchupSeeds(region, roundKey, gameIdx, actualResults) {
-  const rounds = ["r64","r32","s16","e8"];
-  const ri = rounds.indexOf(roundKey);
-  if (ri === 0) {
-    return [BRACKET[region][gameIdx*2].seed, BRACKET[region][gameIdx*2+1].seed];
-  }
-  const prevRound = rounds[ri-1];
-  const w1 = actualResults[region]?.[prevRound]?.[gameIdx*2];
-  const w2 = actualResults[region]?.[prevRound]?.[gameIdx*2+1];
-  return [SEEDS[w1]||null, SEEDS[w2]||null];
+function getMatchupSeeds(region,roundKey,gameIdx,actualResults){
+  const rounds=["r64","r32","s16","e8"]; const ri=rounds.indexOf(roundKey);
+  if(ri===0)return[BRACKET[region][gameIdx*2].seed,BRACKET[region][gameIdx*2+1].seed];
+  const prev=rounds[ri-1];
+  return[SEEDS[actualResults[region]?.[prev]?.[gameIdx*2]]||null,SEEDS[actualResults[region]?.[prev]?.[gameIdx*2+1]]||null];
 }
 
-function calcScore(picks, actual) {
-  let s = 0;
-  REGIONS.forEach(r => {
-    ["r64","r32","s16","e8"].forEach((rk, ri) => {
-      (actual[r]?.[rk]||[]).forEach((winner, gi) => {
-        if (picks[r]?.[rk]?.[gi] === winner) {
-          s += ROUND_PTS[ri];
-          const [s1,s2] = getMatchupSeeds(r, rk, gi, actual);
-          const ws = SEEDS[winner]; const ls = (s1===ws)?s2:s1;
-          s += upsetBonus(ws, ls);
+function calcScore(picks,actual){
+  let s=0;
+  REGIONS.forEach(r=>{
+    ["r64","r32","s16","e8"].forEach((rk,ri)=>{
+      (actual[r]?.[rk]||[]).forEach((winner,gi)=>{
+        if(picks[r]?.[rk]?.[gi]===winner){
+          s+=ROUND_PTS[ri];
+          const[s1,s2]=getMatchupSeeds(r,rk,gi,actual);
+          const ws=SEEDS[winner];const ls=(s1===ws)?s2:s1;
+          s+=upsetBonus(ws,ls);
         }
       });
     });
@@ -215,17 +219,17 @@ function emptyPicks(){
 /* ── ESPN ── */
 const ESPN_URL="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200";
 async function fetchESPN(){
-  try{
-    const r=await fetch(ESPN_URL); if(!r.ok)throw new Error();
-    const d=await r.json();
-    return (d.events||[]).map(ev=>({name:ev.name,status:ev.status?.type?.name,winner:ev.competitions?.[0]?.competitors?.find(c=>c.winner)?.team?.displayName||null}));
-  }catch{ return null; }
+  try{ const r=await fetch(ESPN_URL); if(!r.ok)throw new Error(); const d=await r.json();
+    return(d.events||[]).map(ev=>({name:ev.name,status:ev.status?.type?.name,winner:ev.competitions?.[0]?.competitors?.find(c=>c.winner)?.team?.displayName||null}));
+  }catch{return null;}
 }
 
-/* ── SUPABASE HELPERS ── */
-async function dbGetEntries(){ const {data}=await sb.from("entries").select("*").order("score",{ascending:false}); return data||[]; }
-async function dbUpsertEntry(e){ const {data}=await sb.from("entries").upsert(e,{onConflict:"email"}).select().single(); return data; }
-async function dbGetByEmail(email){ const {data}=await sb.from("entries").select("*").eq("email",email.toLowerCase()).single(); return data||null; }
+/* ── DB ── */
+async function dbGetEntries(){const{data}=await sb.from("entries").select("*").order("score",{ascending:false});return data||[];}
+async function dbUpsertEntry(e){const{data}=await sb.from("entries").upsert(e,{onConflict:"email"}).select().single();return data;}
+async function dbGetByEmail(email){const{data}=await sb.from("entries").select("*").eq("email",email.toLowerCase()).single();return data||null;}
+async function dbGetMessages(){const{data}=await sb.from("messages").select("*").order("created_at",{ascending:true}).limit(200);return data||[];}
+async function dbSendMessage(bracket_name,email,body){const{data}=await sb.from("messages").insert({bracket_name,email,body}).select().single();return data;}
 
 /* ── SHARED COMPONENTS ── */
 function PrideBanner(){
@@ -236,21 +240,22 @@ function PrideBanner(){
     </div>
   );
 }
-
 function LockBanner(){
-  const locked = isBracketLocked();
-  const cd = lockCountdown();
-  if (locked) return(
-    <div className="lock-banner">
-      🔒 <strong>Brackets are locked.</strong> The tournament has begun — no new entries or edits are allowed. Good luck!
-    </div>
-  );
-  if (cd) return(
-    <div className="lock-banner">
-      ⏳ <strong>Brackets lock in {cd}</strong> — at 11:00 AM CST on Thursday, March 19. Submit or finalize your picks before then!
-    </div>
-  );
+  const locked=isBracketLocked(); const cd=lockCountdown();
+  if(locked)return<div className="lock-banner">🔒 <strong>Brackets are locked.</strong> The tournament has begun — no new entries or edits allowed. Good luck!</div>;
+  if(cd)return<div className="lock-banner">⏳ <strong>Brackets lock in {cd}</strong> — at 11:00 AM CST on Thursday, March 19. Submit your picks before then!</div>;
   return null;
+}
+
+/* ── TIME FORMATTER ── */
+function fmtTime(iso){
+  const d=new Date(iso); const now=new Date();
+  const diffMs=now-d; const diffMins=Math.floor(diffMs/60000);
+  if(diffMins<1)return"just now";
+  if(diffMins<60)return`${diffMins}m ago`;
+  const diffH=Math.floor(diffMins/60);
+  if(diffH<24)return`${diffH}h ago`;
+  return d.toLocaleDateString([],{month:"short",day:"numeric"});
 }
 
 /* ── APP ── */
@@ -258,43 +263,51 @@ function App(){
   const [view,setView]=useState("landing");
   const [entries,setEntries]=useState([]);
   const [me,setMe]=useState(null);
-  const [viewingEntry,setViewingEntry]=useState(null); // entry being viewed (not me)
+  const [viewingEntry,setViewingEntry]=useState(null);
   const [notif,setNotif]=useState(null);
   const [espnOk,setEspnOk]=useState(null);
   const [liveCount,setLiveCount]=useState(0);
   const [appLoading,setAppLoading]=useState(true);
+  const [unreadChat,setUnreadChat]=useState(false);
 
   useEffect(()=>{
     async function init(){
       const savedEmail=sessionStorage.getItem("zm_email");
       const all=await dbGetEntries();
       setEntries(all);
-      if(savedEmail){ const row=all.find(e=>e.email===savedEmail); if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");} }
+      if(savedEmail){const row=all.find(e=>e.email===savedEmail);if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");}}
       setAppLoading(false);
     }
     init();
   },[]);
 
   useEffect(()=>{
-    async function poll(){ const g=await fetchESPN(); if(!g){setEspnOk(false);return;} setEspnOk(true); setLiveCount(g.filter(x=>x.status==="STATUS_IN_PROGRESS").length); }
-    poll(); const iv=setInterval(poll,60000); return()=>clearInterval(iv);
+    async function poll(){const g=await fetchESPN();if(!g){setEspnOk(false);return;}setEspnOk(true);setLiveCount(g.filter(x=>x.status==="STATUS_IN_PROGRESS").length);}
+    poll();const iv=setInterval(poll,60000);return()=>clearInterval(iv);
   },[]);
 
-  function notify(msg,type="ok"){ setNotif({msg,type}); setTimeout(()=>setNotif(null),3400); }
-  async function refreshEntries(){ const all=await dbGetEntries(); setEntries(all); if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);} }
+  // Show unread dot when new messages arrive and user isn't on chat tab
+  useEffect(()=>{
+    const channel=sb.channel("messages-notify")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},()=>{
+        if(view!=="locker")setUnreadChat(true);
+      })
+      .subscribe();
+    return()=>sb.removeChannel(channel);
+  },[view]);
 
-  function handleViewEntry(entry){
-    setViewingEntry(entry);
-    setView("view-bracket");
-  }
+  function notify(msg,type="ok"){setNotif({msg,type});setTimeout(()=>setNotif(null),3400);}
+  async function refreshEntries(){const all=await dbGetEntries();setEntries(all);if(me){const u=all.find(e=>e.id===me.id);if(u)setMe(u);}}
+
+  function handleViewEntry(entry){setViewingEntry(entry);setView("view-bracket");}
 
   async function handleRegister(email,bracketName){
     if(isBracketLocked()){notify("Brackets are locked — the tournament has started.","err");return;}
     const existing=await dbGetByEmail(email);
-    if(existing){ setMe(existing); sessionStorage.setItem("zm_email",existing.email); await refreshEntries(); setView(existing.picks?"leaderboard":"bracket"); notify(`Welcome back, ${existing.bracket_name}!`); return; }
+    if(existing){setMe(existing);sessionStorage.setItem("zm_email",existing.email);await refreshEntries();setView(existing.picks?"leaderboard":"bracket");notify(`Welcome back, ${existing.bracket_name}!`);return;}
     const saved=await dbUpsertEntry({email:email.toLowerCase(),bracket_name:bracketName,picks:null,score:0});
     if(!saved){notify("Error — please try again.","err");return;}
-    setMe(saved); sessionStorage.setItem("zm_email",saved.email); await refreshEntries(); setView("bracket");
+    setMe(saved);sessionStorage.setItem("zm_email",saved.email);await refreshEntries();setView("bracket");
     notify(`Welcome, ${bracketName}! Fill out your bracket.`);
   }
 
@@ -303,12 +316,14 @@ function App(){
     const score=calcScore(picks,ACTUAL);
     const saved=await dbUpsertEntry({...me,picks,score});
     if(!saved){notify("Error saving — please try again.","err");return;}
-    setMe(saved); await refreshEntries(); notify("Bracket saved! 🏀"); setView("leaderboard");
+    setMe(saved);await refreshEntries();notify("Bracket saved! 🏀");setView("leaderboard");
   }
 
-  function handleLogout(){ setMe(null); sessionStorage.removeItem("zm_email"); setView("landing"); }
+  function handleLogout(){setMe(null);sessionStorage.removeItem("zm_email");setView("landing");}
 
-  if(appLoading) return(
+  function goToLocker(){setUnreadChat(false);setView("locker");}
+
+  if(appLoading)return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{textAlign:"center"}}>
         <div style={{fontSize:52,fontWeight:900,fontStyle:"italic",color:C.red,marginBottom:12}}>ZikaMadness</div>
@@ -320,15 +335,16 @@ function App(){
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.text}}>
       {notif&&<div className="notif" style={{position:"fixed",top:64,right:14,zIndex:400,background:notif.type==="err"?C.redDim:C.greenDim,border:`1px solid ${notif.type==="err"?C.red:C.green}`,color:"#fff",padding:"11px 18px",borderRadius:8,fontWeight:700,fontSize:13,boxShadow:"0 6px 28px rgba(0,0,0,0.7)",maxWidth:300}}>{notif.msg}</div>}
-      <Header me={me} view={view} setView={setView} logout={handleLogout} espnOk={espnOk} liveCount={liveCount} viewingEntry={viewingEntry}/>
+      <Header me={me} view={view} setView={setView} logout={handleLogout} espnOk={espnOk} liveCount={liveCount} viewingEntry={viewingEntry} unreadChat={unreadChat} goToLocker={goToLocker}/>
       <main style={{maxWidth:1100,margin:"0 auto",padding:"22px 14px 90px"}}>
-        {view==="landing"      && <Landing onStart={()=>setView("register")}/>}
-        {view==="register"     && <Register entries={entries} onRegister={handleRegister}/>}
-        {view==="bracket"      && me && <BracketView user={me} onSave={handleSavePicks} readOnly={false}/>}
-        {view==="view-bracket" && viewingEntry && <BracketView user={viewingEntry} onSave={null} readOnly={true} onBack={()=>setView("leaderboard")}/>}
-        {view==="leaderboard"  && <Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries} onViewEntry={handleViewEntry}/>}
-        {view==="scoring"      && <ScoringGuide/>}
-        {!me&&!["landing","register","scoring","view-bracket"].includes(view)&&(
+        {view==="landing"      &&<Landing onStart={()=>setView("register")}/>}
+        {view==="register"     &&<Register entries={entries} onRegister={handleRegister}/>}
+        {view==="bracket"      &&me&&<BracketView user={me} onSave={handleSavePicks} readOnly={false}/>}
+        {view==="view-bracket" &&viewingEntry&&<BracketView user={viewingEntry} onSave={null} readOnly={true} onBack={()=>setView("leaderboard")}/>}
+        {view==="leaderboard"  &&<Leaderboard entries={entries} me={me} onEdit={()=>setView("bracket")} onRefresh={refreshEntries} onViewEntry={handleViewEntry}/>}
+        {view==="locker"       &&<LockerRoom me={me}/>}
+        {view==="scoring"      &&<ScoringGuide/>}
+        {!me&&!["landing","register","scoring","locker"].includes(view)&&(
           <div style={{textAlign:"center",padding:"80px 20px"}}><p style={{color:C.muted,fontSize:16}}>Please <button onClick={()=>setView("register")} style={{background:"none",border:"none",color:C.red,fontSize:16,textDecoration:"underline",cursor:"pointer"}}>sign in</button> to continue.</p></div>
         )}
       </main>
@@ -340,9 +356,9 @@ function App(){
 }
 
 /* ── HEADER ── */
-function Header({me,view,setView,logout,espnOk,liveCount,viewingEntry}){
-  const nb=v=>({background:"transparent",border:`1px solid ${view===v?C.red:C.border}`,color:view===v?"#fff":C.muted,padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:view===v?700:400});
-  const isViewingOther = view==="view-bracket" && viewingEntry;
+function Header({me,view,setView,logout,espnOk,liveCount,viewingEntry,unreadChat,goToLocker}){
+  const nb=v=>({background:"transparent",border:`1px solid ${view===v?C.red:C.border}`,color:view===v?"#fff":C.muted,padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:view===v?700:400,position:"relative"});
+  const isViewingOther=view==="view-bracket"&&viewingEntry;
   return(
     <header style={{background:C.surface,borderBottom:`3px solid ${C.red}`,position:"sticky",top:0,zIndex:200}}>
       <div style={{maxWidth:1100,margin:"0 auto",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
@@ -360,6 +376,11 @@ function Header({me,view,setView,logout,espnOk,liveCount,viewingEntry}){
         <nav style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           {me&&<button style={nb("leaderboard")} onClick={()=>setView("leaderboard")}>Leaderboard</button>}
           {me&&!isViewingOther&&<button style={nb("bracket")} onClick={()=>setView("bracket")}>My Bracket</button>}
+          {/* Locker Room — visible to all */}
+          <button style={{...nb("locker"),paddingRight:unreadChat?"22px":"13px"}} onClick={goToLocker}>
+            🏀 Locker Room
+            {unreadChat&&<span style={{position:"absolute",top:4,right:5,width:8,height:8,borderRadius:"50%",background:C.green,border:`1px solid ${C.bg}`}}/>}
+          </button>
           <button style={nb("scoring")} onClick={()=>setView("scoring")}>Scoring</button>
           {me?<button onClick={logout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.dim,padding:"6px 13px",borderRadius:4,fontSize:13}}>Sign Out</button>
              :<button onClick={()=>setView("register")} style={{background:C.red,border:"none",color:"#fff",padding:"6px 13px",borderRadius:4,fontSize:13,fontWeight:700}}>Sign In</button>}
@@ -374,9 +395,152 @@ function Header({me,view,setView,logout,espnOk,liveCount,viewingEntry}){
   );
 }
 
+/* ── LOCKER ROOM CHAT ── */
+function LockerRoom({me}){
+  const [messages,setMessages]=useState([]);
+  const [body,setBody]=useState("");
+  const [sending,setSending]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const bottomRef=useRef(null);
+  const textareaRef=useRef(null);
+
+  useEffect(()=>{
+    async function load(){
+      const msgs=await dbGetMessages();
+      setMessages(msgs);
+      setLoading(false);
+    }
+    load();
+
+    // Real-time subscription
+    const channel=sb.channel("messages-live")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},(payload)=>{
+        setMessages(prev=>{
+          // avoid duplicates
+          if(prev.find(m=>m.id===payload.new.id))return prev;
+          return[...prev,payload.new];
+        });
+      })
+      .subscribe();
+
+    return()=>sb.removeChannel(channel);
+  },[]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(()=>{
+    bottomRef.current?.scrollIntoView({behavior:"smooth"});
+  },[messages]);
+
+  async function send(){
+    if(!me){return;}
+    const txt=body.trim();
+    if(!txt||sending)return;
+    setSending(true);
+    setBody("");
+    await dbSendMessage(me.bracket_name,me.email,txt);
+    setSending(false);
+    textareaRef.current?.focus();
+  }
+
+  function handleKey(e){
+    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}
+  }
+
+  // Group messages: consecutive messages from same person get collapsed header
+  function shouldShowHeader(msgs,i){
+    if(i===0)return true;
+    const prev=msgs[i-1];const cur=msgs[i];
+    if(prev.email!==cur.email)return true;
+    // show header if >5 mins gap
+    return(new Date(cur.created_at)-new Date(prev.created_at))>300000;
+  }
+
+  return(
+    <div className="fade-in" style={{maxWidth:720,margin:"0 auto"}}>
+      {/* Header */}
+      <div style={{marginBottom:20}}>
+        <h2 style={{fontSize:28,fontWeight:900,margin:"0 0 4px",fontStyle:"italic"}}>
+          🏀 The Locker Room
+        </h2>
+        <p style={{color:C.muted,fontSize:13}}>
+          Trash talk, hot takes, celebrations, and excuses. All welcome.
+          {!me&&<span style={{color:C.redHi}}> Sign in to post.</span>}
+        </p>
+      </div>
+
+      {/* Message feed */}
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+        <div style={{flex:1,overflowY:"auto",padding:"16px 14px",display:"flex",flexDirection:"column",gap:4,minHeight:360,maxHeight:"60vh"}}>
+          {loading&&(
+            <div style={{textAlign:"center",padding:"40px 0",color:C.muted}}>
+              <span className="spin" style={{fontSize:22,color:C.red}}>⟳</span>
+              <p style={{marginTop:10,fontSize:13}}>Loading the locker room…</p>
+            </div>
+          )}
+          {!loading&&messages.length===0&&(
+            <div style={{textAlign:"center",padding:"40px 20px",color:C.dim}}>
+              <div style={{fontSize:40,marginBottom:12}}>🏀</div>
+              <p style={{fontSize:14,lineHeight:1.6}}>The locker room is quiet… for now.<br/>Be the first to talk some trash.</p>
+            </div>
+          )}
+          {!loading&&messages.map((msg,i)=>{
+            const isMe=me&&msg.email===me.email;
+            const showHeader=shouldShowHeader(messages,i);
+            return(
+              <div key={msg.id} className="msg-pop" style={{display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",marginTop:showHeader?14:2}}>
+                {showHeader&&(
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4,flexDirection:isMe?"row-reverse":"row"}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:isMe?C.red:C.navyHi,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
+                      {msg.bracket_name.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:isMe?C.redHi:"#c8e0ff"}}>{msg.bracket_name}</span>
+                    <span style={{fontSize:10,color:C.dim}}>{fmtTime(msg.created_at)}</span>
+                  </div>
+                )}
+                <div className={`chat-bubble ${isMe?"mine":"theirs"}`}>
+                  {msg.body}
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef}/>
+        </div>
+
+        {/* Input */}
+        <div className="chat-input-row">
+          {me?(
+            <>
+              <textarea
+                ref={textareaRef}
+                value={body}
+                onChange={e=>setBody(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Say something… (Enter to send, Shift+Enter for new line)"
+                rows={1}
+                disabled={sending}
+              />
+              <button className="chat-send-btn" onClick={send} disabled={!body.trim()||sending}>
+                {sending?<span className="spin" style={{fontSize:14}}>⟳</span>:"↑"}
+              </button>
+            </>
+          ):(
+            <div style={{flex:1,textAlign:"center",fontSize:13,color:C.muted,padding:"6px 0"}}>
+              <a href="#" onClick={e=>{e.preventDefault();}} style={{color:C.redHi}}>Sign in</a> to join the conversation.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p style={{fontSize:11,color:C.dim,marginTop:10,textAlign:"center"}}>
+        Messages are visible to all ZikaMadness participants · Be excellent to each other
+      </p>
+    </div>
+  );
+}
+
 /* ── LANDING ── */
 function Landing({onStart}){
-  const locked=isBracketLocked(); const cd=lockCountdown();
+  const locked=isBracketLocked();const cd=lockCountdown();
   return(
     <div style={{minHeight:"80vh",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",padding:"40px 0"}}>
       <div style={{position:"absolute",top:"-15%",left:"50%",transform:"translateX(-50%)",width:700,height:700,borderRadius:"50%",background:`radial-gradient(circle,${C.red}0b 0%,transparent 68%)`,pointerEvents:"none"}}/>
@@ -419,16 +583,16 @@ function Landing({onStart}){
 
 /* ── REGISTER ── */
 function Register({entries,onRegister}){
-  const [email,setEmail]=useState(""); const [name,setName]=useState(""); const [mode,setMode]=useState("new"); const [saving,setSaving]=useState(false);
+  const [email,setEmail]=useState("");const [name,setName]=useState("");const [mode,setMode]=useState("new");const [saving,setSaving]=useState(false);
   const locked=isBracketLocked();
   const found=entries.find(e=>e.email===email.toLowerCase());
-  async function submit(){ if(locked)return; if(!email.trim())return; if(mode==="new"&&!name.trim())return; setSaving(true); await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim()); setSaving(false); }
+  async function submit(){if(locked)return;if(!email.trim())return;if(mode==="new"&&!name.trim())return;setSaving(true);await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim());setSaving(false);}
   const tabSt=m=>({flex:1,padding:"10px 0",border:"none",background:mode===m?C.red:"transparent",color:mode===m?"#fff":C.muted,fontWeight:mode===m?700:400,fontSize:14});
   const inp={width:"100%",background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"11px 13px",color:C.text,fontSize:15,marginBottom:16};
   return(
     <div style={{maxWidth:460,margin:"0 auto",padding:"32px 0"}}>
       <PrideBanner/>
-      {locked&&<div className="lock-banner">🔒 <strong>Brackets are locked.</strong> The tournament has started — new entries are no longer accepted.</div>}
+      {locked&&<div className="lock-banner">🔒 <strong>Brackets are locked.</strong> New entries are no longer accepted.</div>}
       <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:28,opacity:locked?0.6:1}}>
         <h2 style={{fontSize:26,fontWeight:900,margin:"0 0 6px",fontStyle:"italic"}}>Join the Pool</h2>
         <p style={{color:C.muted,fontSize:13,marginBottom:22}}>One bracket entry per email. No exceptions.</p>
@@ -468,19 +632,19 @@ function TBtn({name,seed,isPicked,isCorrect,isWrong,bonus,onClick,readOnly}){
   );
 }
 
-/* ── BRACKET VIEW (shared for editing + read-only) ── */
-function BracketView({user, onSave, readOnly, onBack}){
+/* ── BRACKET VIEW ── */
+function BracketView({user,onSave,readOnly,onBack}){
   const [picks,setPicks]=useState(()=>user.picks?JSON.parse(JSON.stringify(user.picks)):emptyPicks());
-  const [tab,setTab]=useState("South"); const [saving,setSaving]=useState(false);
+  const [tab,setTab]=useState("South");const [saving,setSaving]=useState(false);
   const locked=isBracketLocked();
-  const effectiveReadOnly = readOnly || locked;
+  const effectiveReadOnly=readOnly||locked;
 
   function pick(region,rk,gi,name){
     if(effectiveReadOnly)return;
-    const p=JSON.parse(JSON.stringify(picks)); p[region][rk][gi]=name;
-    const rounds=["r64","r32","s16","e8"]; const ri=rounds.indexOf(rk);
-    for(let r=ri+1;r<rounds.length;r++){ const n=8>>r; for(let g=0;g<n;g++){ const prev=rounds[r-1]; const f1=p[region][prev][g*2],f2=p[region][prev][g*2+1]; if(p[region][rounds[r]][g]!==f1&&p[region][rounds[r]][g]!==f2)p[region][rounds[r]][g]=null; } }
-    const rIdx=REGIONS.indexOf(region); if(!p[region].e8[0]){p.finalFour[rIdx]=null;p.semis=[null,null];p.champion=null;}
+    const p=JSON.parse(JSON.stringify(picks));p[region][rk][gi]=name;
+    const rounds=["r64","r32","s16","e8"];const ri=rounds.indexOf(rk);
+    for(let r=ri+1;r<rounds.length;r++){const n=8>>r;for(let g=0;g<n;g++){const prev=rounds[r-1];const f1=p[region][prev][g*2],f2=p[region][prev][g*2+1];if(p[region][rounds[r]][g]!==f1&&p[region][rounds[r]][g]!==f2)p[region][rounds[r]][g]=null;}}
+    const rIdx=REGIONS.indexOf(region);if(!p[region].e8[0]){p.finalFour[rIdx]=null;p.semis=[null,null];p.champion=null;}
     setPicks(p);
   }
   function pickSemi(slot,name){if(effectiveReadOnly)return;const p=JSON.parse(JSON.stringify(picks));p.semis[slot]=name;p.champion=null;setPicks(p);}
@@ -492,34 +656,24 @@ function BracketView({user, onSave, readOnly, onBack}){
 
   return(
     <div className="fade-in">
-      {readOnly
-        ? <div className="view-only-banner">👁 <strong>Viewing {user.bracket_name}'s bracket</strong> — read only. <button onClick={onBack} style={{background:"none",border:"none",color:C.navyBright,fontSize:13,cursor:"pointer",textDecoration:"underline",marginLeft:8}}>← Back to Leaderboard</button></div>
-        : <PrideBanner/>
-      }
+      {readOnly?<div className="view-only-banner">👁 <strong>Viewing {user.bracket_name}'s bracket</strong> — read only. <button onClick={onBack} style={{background:"none",border:"none",color:C.navyBright,fontSize:13,cursor:"pointer",textDecoration:"underline",marginLeft:8}}>← Back to Leaderboard</button></div>:<PrideBanner/>}
       {!readOnly&&locked&&<div className="lock-banner">🔒 <strong>Brackets are locked</strong> — viewing your picks (no edits allowed).</div>}
-      {!readOnly&&!locked&&lockCountdown()&&<LockBanner/>}
-
+      {!readOnly&&!locked&&<LockBanner/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18,flexWrap:"wrap",gap:10}}>
         <div>
           <h2 style={{fontSize:24,fontWeight:900,margin:0,fontStyle:"italic"}}>{user.bracket_name}{readOnly?" — View Only":""}</h2>
           {!effectiveReadOnly&&<p style={{color:C.muted,fontSize:12,marginTop:3}}>Click a team to pick them. Selections cascade automatically.</p>}
           {effectiveReadOnly&&!readOnly&&<p style={{color:"#b8860b",fontSize:12,marginTop:3}}>🔒 The tournament has started — your picks are locked in.</p>}
         </div>
-        {!effectiveReadOnly&&(
-          <button onClick={handleSave} disabled={saving} style={{background:done?C.red:C.navyHi,color:"#fff",border:"none",borderRadius:6,padding:"11px 22px",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:7,opacity:saving?0.7:1}}>
-            {saving&&<span className="spin">⟳</span>}{saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
-          </button>
-        )}
+        {!effectiveReadOnly&&<button onClick={handleSave} disabled={saving} style={{background:done?C.red:C.navyHi,color:"#fff",border:"none",borderRadius:6,padding:"11px 22px",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:7,opacity:saving?0.7:1}}>
+          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":done?"Save Bracket ✓":"Save Bracket (incomplete)"}
+        </button>}
       </div>
-
       <div style={{display:"flex",gap:5,marginBottom:18,flexWrap:"wrap"}}>
         {REGIONS.map(r=><button key={r} style={tSt(r)} onClick={()=>setTab(r)}>{r}</button>)}
         <button style={tSt("Final")} onClick={()=>setTab("Final")}>🏆 Final Four</button>
       </div>
-      {tab!=="Final"
-        ?<RegionBracket region={tab} picks={picks} onPick={pick} readOnly={effectiveReadOnly}/>
-        :<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp} readOnly={effectiveReadOnly}/>
-      }
+      {tab!=="Final"?<RegionBracket region={tab} picks={picks} onPick={pick} readOnly={effectiveReadOnly}/>:<FinalFour picks={picks} onPickSemi={pickSemi} onPickChamp={pickChamp} readOnly={effectiveReadOnly}/>}
     </div>
   );
 }
@@ -531,7 +685,7 @@ function RegionBracket({region,picks,onPick,readOnly}){
   const labels=["Round of 64","Round of 32","Sweet 16","Elite Eight"];
   function getOpts(ri,gi){
     if(ri===0)return[teams[gi*2],teams[gi*2+1]];
-    const prev=rounds[ri-1]; const a=picks[region][prev][gi*2],b=picks[region][prev][gi*2+1];
+    const prev=rounds[ri-1];const a=picks[region][prev][gi*2],b=picks[region][prev][gi*2+1];
     return[a?{name:a,seed:SEEDS[a]}:null,b?{name:b,seed:SEEDS[b]}:null].filter(Boolean);
   }
   return(
@@ -545,13 +699,9 @@ function RegionBracket({region,picks,onPick,readOnly}){
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {Array.from({length:nG}).map((_,gi)=>{
-                const opts=getOpts(ri,gi); const picked=picks[region][rk][gi]; const actualW=ACTUAL[region]?.[rk]?.[gi];
+                const opts=getOpts(ri,gi);const picked=picks[region][rk][gi];const actualW=ACTUAL[region]?.[rk]?.[gi];
                 let bonus=0;
-                if(actualW&&picked===actualW){
-                  const [s1,s2]=getMatchupSeeds(region,rk,gi,ACTUAL);
-                  const ws=SEEDS[actualW]; const ls=(s1===ws)?s2:s1;
-                  bonus=upsetBonus(ws,ls);
-                }
+                if(actualW&&picked===actualW){const[s1,s2]=getMatchupSeeds(region,rk,gi,ACTUAL);const ws=SEEDS[actualW];const ls=(s1===ws)?s2:s1;bonus=upsetBonus(ws,ls);}
                 return(
                   <div key={gi} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:6,padding:5,display:"flex",flexDirection:"column",gap:3}}>
                     {opts.length<2&&ri>0&&<div style={{color:C.dim,fontSize:10,textAlign:"center",padding:"7px 0"}}>← pick previous rounds</div>}
@@ -572,10 +722,9 @@ function RegionBracket({region,picks,onPick,readOnly}){
   );
 }
 
-/* ── FINAL FOUR — mobile-first grid layout ── */
+/* ── FINAL FOUR ── */
 function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
   const champs=REGIONS.map(r=>picks[r].e8[0]);
-
   function SemiPanel({slots,semiIdx,className}){
     return(
       <div className={className} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,minWidth:0}}>
@@ -591,44 +740,26 @@ function FinalFour({picks,onPickSemi,onPickChamp,readOnly}){
       </div>
     );
   }
-
   return(
     <div>
       <h3 style={{fontSize:24,fontWeight:900,margin:"0 0 4px",fontStyle:"italic"}}>Final Four</h3>
       <p style={{color:C.muted,fontSize:12,marginBottom:18}}>Pick semifinal winners, then crown your champion.</p>
-
       <div className="ff-grid">
         <SemiPanel slots={[0,2]} semiIdx={0} className="ff-semi-0"/>
-
-        {/* Champion box */}
         <div className="ff-champ-box" style={{background:`${C.red}0d`,border:`2px solid ${C.red}55`,borderRadius:10,padding:18,textAlign:"center",minWidth:140}}>
           <div style={{fontSize:32,marginBottom:5}}>🏆</div>
           <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:C.redHi,marginBottom:10}}>Champion</div>
           {picks.semis[0]&&picks.semis[1]
             ?[picks.semis[0],picks.semis[1]].map(t=>{
               const isp=picks.champion===t,ok=isp&&ACTUAL.champion===t,bad=isp&&ACTUAL.champion&&ACTUAL.champion!==t;
-              return(
-                <div key={t} style={{marginTop:7}}>
-                  <button onClick={()=>!readOnly&&onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 10px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.redHi:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400,cursor:readOnly?"default":"pointer"}}>
-                    {t} {ok&&"🏆"}{bad&&"✗"}
-                  </button>
-                </div>
-              );
+              return<div key={t} style={{marginTop:7}}><button onClick={()=>!readOnly&&onPickChamp(t)} style={{display:"block",width:"100%",padding:"10px 10px",background:ok?C.greenDim:bad?`${C.red}20`:isp?`${C.red}28`:C.bg,border:`2px solid ${ok?C.green:bad?C.red:isp?C.red:C.border}`,borderRadius:6,color:ok?C.green:bad?C.redHi:isp?"#fff":C.muted,fontSize:13,fontWeight:isp?700:400,cursor:readOnly?"default":"pointer"}}>{t} {ok&&"🏆"}{bad&&"✗"}</button></div>;
             })
             :<div style={{color:C.dim,fontSize:12,padding:"8px 0",lineHeight:1.5}}>Pick both<br/>semis first</div>
           }
         </div>
-
         <SemiPanel slots={[1,3]} semiIdx={1} className="ff-semi-1"/>
       </div>
-
-      {picks.champion&&(
-        <div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>
-          Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>
-          {ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}
-          {ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}
-        </div>
-      )}
+      {picks.champion&&<div style={{textAlign:"center",marginTop:20,fontSize:17,color:C.muted}}>Your Champion: <strong style={{color:"#fff"}}>{picks.champion}</strong>{ACTUAL.champion&&picks.champion===ACTUAL.champion&&<span style={{color:C.green}}> 🏆 Correct!</span>}{ACTUAL.champion&&picks.champion!==ACTUAL.champion&&<span style={{color:C.redHi}}> ✗</span>}</div>}
     </div>
   );
 }
@@ -639,11 +770,9 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
   const locked=isBracketLocked();
   const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
   async function handleRefresh(){setRefreshing(true);await onRefresh();setRefreshing(false);}
-
   return(
     <div className="fade-in">
-      <PrideBanner/>
-      <LockBanner/>
+      <PrideBanner/><LockBanner/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
         <div>
           <h2 style={{fontSize:28,fontWeight:900,margin:0,fontStyle:"italic"}}>Leaderboard</h2>
@@ -653,46 +782,29 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
           <button onClick={handleRefresh} disabled={refreshing} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"7px 14px",borderRadius:4,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
             {refreshing?<span className="spin">⟳</span>:"↻"} Refresh
           </button>
-          {me&&!locked&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.red}`,color:C.redHi,padding:"7px 16px",borderRadius:4,fontSize:13,fontWeight:700}}>Edit My Bracket</button>}
-          {me&&locked&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"7px 16px",borderRadius:4,fontSize:13}}>View My Bracket</button>}
+          {me&&<button onClick={onEdit} style={{background:"transparent",border:`1px solid ${C.red}`,color:C.redHi,padding:"7px 16px",borderRadius:4,fontSize:13,fontWeight:700}}>{locked?"View My Bracket":"Edit My Bracket"}</button>}
         </div>
       </div>
-
       {sorted.length===0
         ?<div style={{textAlign:"center",color:C.dim,padding:"60px 20px",fontSize:15,background:C.card,borderRadius:10,border:`1px solid ${C.border}`}}>No entries yet — be the first!</div>
         :(
           <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden",marginBottom:24}}>
             <div style={{display:"flex",padding:"9px 14px",borderBottom:`1px solid ${C.border}`,fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,gap:8}}>
-              <span style={{width:38}}>#</span>
-              <span style={{flex:1}}>Bracket</span>
-              <span style={{width:56,textAlign:"right"}}>Pts</span>
-              <span style={{width:120,textAlign:"right",display:"none"}} className="champ-col">Champion</span>
+              <span style={{width:38}}>#</span><span style={{flex:1}}>Bracket</span><span style={{width:56,textAlign:"right"}}>Pts</span>
             </div>
             {sorted.map((u,i)=>{
-              const isMe=me?.id===u.id;
-              const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
-              const champ=u.picks?.champion||"—";
-              const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
+              const isMe=me?.id===u.id;const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`;
+              const champ=u.picks?.champion||"—";const champOk=u.picks?.champion&&u.picks.champion===ACTUAL.champion;
               return(
-                <div key={u.id}
-                  onClick={()=>onViewEntry(u)}
+                <div key={u.id} onClick={()=>onViewEntry(u)}
                   style={{display:"flex",alignItems:"center",padding:"13px 14px",borderBottom:`1px solid ${C.border}`,gap:8,background:isMe?C.redFaint:i%2===0?C.card:C.surface,borderLeft:`3px solid ${isMe?C.red:"transparent"}`,cursor:"pointer",transition:"background 0.15s"}}
                   onMouseEnter={e=>e.currentTarget.style.background=isMe?`${C.red}28`:"#161b28"}
-                  onMouseLeave={e=>e.currentTarget.style.background=isMe?C.redFaint:i%2===0?C.card:C.surface}
-                >
+                  onMouseLeave={e=>e.currentTarget.style.background=isMe?C.redFaint:i%2===0?C.card:C.surface}>
                   <span style={{width:38,fontSize:16,flexShrink:0}}>{medal}</span>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      {u.bracket_name}
-                      {isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}
-                    </div>
+                    <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>{u.bracket_name}{isMe&&<span style={{background:C.red,color:"#fff",borderRadius:3,padding:"2px 6px",fontSize:9,fontWeight:900}}>YOU</span>}</div>
                     <div style={{fontSize:13,color:C.muted,marginTop:2}}>{u.email}</div>
-                    {/* Champion pick shown inline on mobile */}
-                    {u.picks?.champion&&(
-                      <div style={{fontSize:11,color:champOk?C.green:C.muted,marginTop:2}}>
-                        🏆 {champ}{champOk&&" ✓"}
-                      </div>
-                    )}
+                    {u.picks?.champion&&<div style={{fontSize:11,color:champOk?C.green:C.muted,marginTop:2}}>🏆 {champ}{champOk&&" ✓"}</div>}
                   </div>
                   <span style={{width:56,textAlign:"right",fontWeight:700,fontSize:20,color:isMe?C.redHi:"#fff",flexShrink:0}}>{u.score||0}</span>
                   <span style={{color:C.dim,fontSize:16,flexShrink:0}}>›</span>
@@ -702,19 +814,16 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
           </div>
         )
       }
-
       <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:18}}>
         <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.dim,marginBottom:14}}>2026 Tournament Status</div>
         <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           {REGIONS.map(r=>(
             <div key={r} style={{flex:"1 1 130px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"10px 13px",fontSize:12,lineHeight:1.9}}>
-              <strong style={{color:C.redHi}}>{r}</strong><br/>
-              <span style={{color:C.muted}}>1-seed: {BRACKET[r][0].name}</span>
+              <strong style={{color:C.redHi}}>{r}</strong><br/><span style={{color:C.muted}}>1-seed: {BRACKET[r][0].name}</span>
             </div>
           ))}
           <div style={{flex:"1 1 130px",background:C.bg,border:`1px solid ${C.red}66`,borderRadius:6,padding:"10px 13px",fontSize:12,lineHeight:1.9}}>
-            <strong style={{color:C.redHi}}>🏆 Champion</strong><br/>
-            <span style={{color:ACTUAL.champion?"#fff":C.dim,fontWeight:ACTUAL.champion?700:400}}>{ACTUAL.champion||"TBD"}</span>
+            <strong style={{color:C.redHi}}>🏆 Champion</strong><br/><span style={{color:ACTUAL.champion?"#fff":C.dim,fontWeight:ACTUAL.champion?700:400}}>{ACTUAL.champion||"TBD"}</span>
           </div>
         </div>
       </div>
@@ -724,13 +833,7 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
 
 /* ── SCORING GUIDE ── */
 function ScoringGuide(){
-  const examples=[
-    ["R64","#12 McNeese beats #5 Vanderbilt","12−5=7, ÷2","3 pts"],
-    ["R64","#16 beats #1 Florida","16−1=15, ÷2","7 pts"],
-    ["R32","#7 beats #2 Houston","7−2=5, ÷2","2 pts"],
-    ["S16","#11 beats #3 Illinois","11−3=8, ÷2","4 pts"],
-    ["E8", "#9 beats #1 Duke","9−1=8, ÷2","4 pts"],
-  ];
+  const examples=[["R64","#12 McNeese beats #5 Vanderbilt","12−5=7, ÷2","3 pts"],["R64","#16 beats #1 Florida","16−1=15, ÷2","7 pts"],["R32","#7 beats #2 Houston","7−2=5, ÷2","2 pts"],["S16","#11 beats #3 Illinois","11−3=8, ÷2","4 pts"],["E8","#9 beats #1 Duke","9−1=8, ÷2","4 pts"]];
   return(
     <div className="fade-in" style={{maxWidth:860,margin:"0 auto",padding:"34px 0"}}>
       <PrideBanner/>
@@ -743,23 +846,19 @@ function ScoringGuide(){
               <span style={{color:C.muted}}>{r}</span><span style={{color:"#fff",fontWeight:700}}>{p}</span>
             </div>
           ))}
-          <p style={{color:C.dim,fontSize:11,marginTop:10,lineHeight:1.6}}>Your champion pick is worth 8× a first-round pick. Late-round picks matter most.</p>
         </div>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
           <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>🚀 Upset Bonus — All Rounds</h3>
-          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:10}}>Correctly pick a higher seed to win <strong style={{color:"#fff"}}>in any round</strong>:</p>
-          <div style={{background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"10px 12px",fontSize:13,color:"#7bc3ff",fontFamily:"monospace",marginBottom:14,lineHeight:1.8}}>
-            Bonus = floor( (winner seed − loser seed) ÷ 2 )
-          </div>
-          <p style={{color:C.dim,fontSize:11,lineHeight:1.6}}>Bigger seed gap = bigger bonus. Applies whenever the higher-numbered seed wins, in every round.</p>
+          <p style={{color:C.muted,fontSize:12,lineHeight:1.65,marginBottom:10}}>Correctly pick the higher seed to win in any round:</p>
+          <div style={{background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"10px 12px",fontSize:13,color:"#7bc3ff",fontFamily:"monospace",marginBottom:14,lineHeight:1.8}}>Bonus = floor( (winner seed − loser seed) ÷ 2 )</div>
+          <p style={{color:C.dim,fontSize:11,lineHeight:1.6}}>Bigger seed gap = bigger bonus. Applies in every round.</p>
         </div>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:22}}>
           <h3 style={{fontSize:14,fontWeight:700,color:C.redHi,marginBottom:14}}>📊 Bonus Examples</h3>
           {examples.map(([rnd,matchup,calc,pts])=>(
             <div key={matchup} style={{padding:"7px 0",borderBottom:`1px solid ${C.border}`,fontSize:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:C.muted,flex:1}}>{matchup}</span>
-                <span style={{color:C.redHi,fontWeight:700,marginLeft:8}}>{pts}</span>
+                <span style={{color:C.muted,flex:1}}>{matchup}</span><span style={{color:C.redHi,fontWeight:700,marginLeft:8}}>{pts}</span>
               </div>
               <div style={{color:C.dim,fontSize:10,marginTop:2}}>{rnd} · {calc}</div>
             </div>
@@ -768,15 +867,11 @@ function ScoringGuide(){
       </div>
       <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:10,padding:22,marginBottom:16}}>
         <h3 style={{fontSize:14,fontWeight:700,color:"#b8860b",marginBottom:10}}>🔒 Bracket Lock</h3>
-        <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>
-          All brackets lock at <strong style={{color:"#fff"}}>11:00 AM CST on Thursday, March 19</strong> — right before the first game tips off. No new entries or edits after that point. Make sure your picks are in before then!
-        </p>
+        <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>All brackets lock at <strong style={{color:"#fff"}}>11:00 AM CST on Thursday, March 19</strong> — right before tip-off. No new entries or edits after that point.</p>
       </div>
       <div style={{background:C.card,border:`1px solid ${C.navyHi}`,borderRadius:10,padding:22}}>
         <h3 style={{fontSize:14,fontWeight:700,color:"#7bc3ff",marginBottom:10}}>📡 Live Score Updates via ESPN</h3>
-        <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>
-          ZikaMadness polls ESPN every <strong style={{color:"#fff"}}>60 seconds</strong>. Scores update automatically as games complete. <strong style={{color:"#fff"}}>First round: March 19–20. Final Four: April 4. Championship: April 6, Indianapolis.</strong>
-        </p>
+        <p style={{color:C.muted,fontSize:13,lineHeight:1.75}}>ZikaMadness polls ESPN every <strong style={{color:"#fff"}}>60 seconds</strong>. Scores update automatically as games complete. <strong style={{color:"#fff"}}>First round: March 19–20. Final Four: April 4. Championship: April 6, Indianapolis.</strong></p>
       </div>
     </div>
   );
