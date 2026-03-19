@@ -174,11 +174,23 @@ const BRACKET = {
   ],
 };
 
-const ACTUAL = {
+/* ── ACTUAL RESULTS — loaded live from Supabase results table ──
+   To update as games complete, run in Supabase SQL Editor:
+   UPDATE results SET data = '<json>' WHERE id = 1;
+   See bottom of this file for the full JSON format reference.
+── */
+let ACTUAL = {
   South:{r64:[],r32:[],s16:[],e8:[]}, East:{r64:[],r32:[],s16:[],e8:[]},
   West:{r64:[],r32:[],s16:[],e8:[]}, Midwest:{r64:[],r32:[],s16:[],e8:[]},
   finalFour:[],semis:[],champion:null,
 };
+async function fetchActual(){
+  try{
+    const {data,error}=await sb.from("results").select("data").eq("id",1).single();
+    if(!error&&data?.data) ACTUAL=data.data;
+  }catch(e){ console.log("results fetch:",e); }
+  return ACTUAL;
+}
 
 const SEEDS={};
 REGIONS.forEach(r=>BRACKET[r].forEach(t=>{SEEDS[t.name]=t.seed;}));
@@ -273,12 +285,16 @@ function App(){
   useEffect(()=>{
     async function init(){
       const savedEmail=localStorage.getItem("zm_email");
+      await fetchActual(); // load live results first
       const all=await dbGetEntries();
       setEntries(all);
       if(savedEmail){const row=all.find(e=>e.email===savedEmail);if(row){setMe(row);setView(row.picks?"leaderboard":"bracket");}}
       setAppLoading(false);
     }
     init();
+    // Re-fetch results every 60s so leaderboard stays current
+    const rv=setInterval(async()=>{ await fetchActual(); },60000);
+    return()=>clearInterval(rv);
   },[]);
 
   useEffect(()=>{
@@ -302,8 +318,9 @@ function App(){
   function handleViewEntry(entry){setViewingEntry(entry);setView("view-bracket");}
 
   async function handleRegister(email,bracketName){
-    if(isBracketLocked()){notify("Brackets are locked — the tournament has started.","err");return;}
     const existing=await dbGetByEmail(email);
+    // Returning users can always sign back in even after lock
+    if(!existing && isBracketLocked()){notify("Brackets are locked — new entries are not allowed.","err");return;}
     if(existing){setMe(existing);localStorage.setItem("zm_email",existing.email);await refreshEntries();setView(existing.picks?"leaderboard":"bracket");notify(`Welcome back, ${existing.bracket_name}!`);return;}
     const saved=await dbUpsertEntry({email:email.toLowerCase(),bracket_name:bracketName,picks:null,score:0});
     if(!saved){notify("Error — please try again.","err");return;}
@@ -586,7 +603,7 @@ function Register({entries,onRegister}){
   const [email,setEmail]=useState("");const [name,setName]=useState("");const [mode,setMode]=useState("new");const [saving,setSaving]=useState(false);
   const locked=isBracketLocked();
   const found=entries.find(e=>e.email===email.toLowerCase());
-  async function submit(){if(locked)return;if(!email.trim())return;if(mode==="new"&&!name.trim())return;setSaving(true);await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim());setSaving(false);}
+  async function submit(){if(locked&&mode==="new")return;if(!email.trim())return;if(mode==="new"&&!name.trim())return;setSaving(true);await onRegister(email.trim(),mode==="returning"&&found?found.bracket_name:name.trim());setSaving(false);}
   const tabSt=m=>({flex:1,padding:"10px 0",border:"none",background:mode===m?C.red:"transparent",color:mode===m?"#fff":C.muted,fontWeight:mode===m?700:400,fontSize:14});
   const inp={width:"100%",background:C.bg,border:`1px solid ${C.navyHi}`,borderRadius:6,padding:"11px 13px",color:C.text,fontSize:15,marginBottom:16};
   return(
@@ -608,8 +625,8 @@ function Register({entries,onRegister}){
         </>}
         {mode==="returning"&&found&&<div style={{background:C.greenDim,border:`1px solid ${C.green}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.green,marginBottom:16}}>✓ Found: <strong>{found.bracket_name}</strong></div>}
         {mode==="returning"&&email.length>4&&!found&&<div style={{background:C.redFaint,border:`1px solid ${C.red}`,borderRadius:6,padding:"9px 13px",fontSize:13,color:C.redHi,marginBottom:16}}>No entry found — try "New Entry".</div>}
-        <button onClick={submit} disabled={saving||locked} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving&&!locked?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":locked?"Brackets Locked 🔒":mode==="new"?"Create My Bracket →":"Sign Back In →"}
+        <button onClick={submit} disabled={saving||(locked&&mode==="new")} style={{width:"100%",background:C.red,color:"#fff",border:"none",borderRadius:6,padding:"13px",fontSize:15,fontWeight:900,opacity:(email&&(mode==="returning"||name))&&!saving&&!(locked&&mode==="new")?1:0.45,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {saving&&<span className="spin">⟳</span>}{saving?"Saving…":(locked&&mode==="new")?"Brackets Locked 🔒":mode==="new"?"Create My Bracket →":"Sign Back In →"}
         </button>
       </div>
     </div>
@@ -771,7 +788,7 @@ function Leaderboard({entries,me,onEdit,onRefresh,onViewEntry}){
   const [refreshing,setRefreshing]=useState(false);
   const locked=isBracketLocked();
   const sorted=[...entries].sort((a,b)=>(b.score||0)-(a.score||0));
-  async function handleRefresh(){setRefreshing(true);await onRefresh();setRefreshing(false);}
+  async function handleRefresh(){setRefreshing(true);await fetchActual();await onRefresh();setRefreshing(false);}
   return(
     <div className="fade-in">
       <PrideBanner/><LockBanner/>
